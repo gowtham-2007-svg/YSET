@@ -1155,9 +1155,10 @@ body {
   border-left: 4px solid var(--navy-brand);
 }
 
-.stat-card.stat-received { border-left-color: #0284c7; }
-.stat-card.stat-progress { border-left-color: #d97706; }
-.stat-card.stat-resolved { border-left-color: #16a34a; }
+.stat-card.stat-pending { border-left-color: #f59e0b; }
+.stat-card.stat-approved { border-left-color: #0284c7; }
+.stat-card.stat-completed { border-left-color: #16a34a; }
+.stat-card.stat-rejected { border-left-color: #dc2626; }
 
 .stat-num {
   font-family: var(--font-heading);
@@ -1312,9 +1313,10 @@ body {
   outline: none;
 }
 
-.status-changer.received { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-.status-changer.progress { background: #fef3c7; color: #b45309; border-color: #fde68a; }
-.status-changer.resolved { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.status-changer.pending, .status-pending { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.status-changer.approved, .status-approved { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+.status-changer.completed, .status-completed { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.status-changer.rejected, .status-rejected { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
 
 .btn-delete-row {
   background: transparent;

@@ -271,15 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
       ticketId: ticketId,
       studentName: studentNameInput.value.trim(),
       campusId: campusIdInput.value.trim(),
-      branch: studentBranchInput.value,
+      branch: `${studentBranchInput.value} (${whichYearInput.value})`,
       partner: selectedPartner,
       query: queryText,
       email: emailIdInput.value.trim(),
       year: whichYearInput.value,
       phone: phoneNumberInput.value.trim(),
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      status: 'Received (In Review)',
-      statusType: 'received'
+      status: 'Pending'
     };
 
     // Formspree payload
@@ -290,13 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
       student_name: newRequest.studentName,
       campus_id: newRequest.campusId,
       branch: newRequest.branch,
-      year: newRequest.year,
       partner: newRequest.partner,
       request_type: newRequest.query,
       email: newRequest.email,
       phone: newRequest.phone,
       submission_time: newRequest.date
     };
+
+    // Save directly to Supabase document_requests table
+    saveRequest(newRequest);
 
     // Send to Formspree endpoint via AJAX
     const endpoint = (typeof CONFIG !== 'undefined' && CONFIG.FORMSPREE_ENDPOINT) 
@@ -311,26 +312,29 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       body: JSON.stringify(formspreePayload)
     })
-    .then(response => {
-      // Save to localStorage for tracking
-      saveRequest(newRequest);
+    .catch(error => {
+      console.warn('Formspree notification notice:', error);
+    })
+    .finally(() => {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
 
       // Populate Success Modal
       successTicketId.textContent = ticketId;
       successDetailsBox.innerHTML = `
         <div><strong>Student:</strong> <span>${escapeHtml(newRequest.studentName)} (${escapeHtml(newRequest.campusId)})</span></div>
-        <div><strong>Branch / Year:</strong> <span>${escapeHtml(newRequest.branch)} - ${escapeHtml(newRequest.year)}</span></div>
+        <div><strong>Course / Year:</strong> <span>${escapeHtml(newRequest.branch)}</span></div>
         <div><strong>Program Partner:</strong> <span>${escapeHtml(newRequest.partner)}</span></div>
-        <div><strong>Request:</strong> <span>${escapeHtml(newRequest.query)}</span></div>
-        <div><strong>Status:</strong> <span style="color: #0284c7; font-weight: 600;">Received & Logged</span></div>
+        <div><strong>Document Requested:</strong> <span>${escapeHtml(newRequest.query)}</span></div>
+        <div><strong>Status:</strong> <span style="color: #d97706; font-weight: 700;">Pending Review</span></div>
       `;
 
       // Track now button setup
       btnTrackNow.onclick = () => {
         closeModal(modalSuccess);
         openModal(modalTracking);
-        trackInput.value = ticketId;
-        searchTicket(ticketId);
+        trackInput.value = newRequest.campusId;
+        searchTicket(newRequest.campusId);
       };
 
       // Open Success Modal
@@ -341,96 +345,102 @@ document.addEventListener('DOMContentLoaded', () => {
       if (customQueryBox) customQueryBox.style.display = 'none';
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
-    })
-    .catch(error => {
-      console.warn('Formspree dispatch notice:', error);
-      // Ensure smooth student experience with offline/fallback save
-      saveRequest(newRequest);
-      openModal(modalSuccess);
-    })
-    .finally(() => {
-      submitBtn.classList.remove('loading');
-      submitBtn.disabled = false;
     });
   });
 
   // --------------------------------------------------------------------------
-  // LocalStorage & Supabase Helper & Tracking Search
+  // LocalStorage & Supabase document_requests Table Helper
   // --------------------------------------------------------------------------
   function getStoredRequests() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (e) {
-      console.error(e);
       return [];
     }
   }
 
-  function saveRequest(request) {
+  async function fetchSupabaseDocumentRequests() {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('document_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          const formatted = data.map(d => ({
+            id: d.id,
+            ticketId: `DOC-${d.id}`,
+            studentName: d.student_name || '',
+            campusId: d.student_id || '',
+            branch: d.course || '',
+            partner: d.industry_partner || 'Not Applicable',
+            query: d.document_type || '',
+            purpose: d.purpose || '',
+            email: d.email || '',
+            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
+            status: d.status || 'Pending'
+          }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
+          return formatted;
+        } else if (error) {
+          console.warn('Supabase fetch notice:', error.message);
+        }
+      } catch (err) {
+        console.warn('Supabase error:', err);
+      }
+    }
+    return getStoredRequests();
+  }
+
+  async function saveRequest(request) {
     const list = getStoredRequests();
-    // Avoid duplicates locally
     if (!list.some(r => r.ticketId === request.ticketId)) {
       list.unshift(request);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
 
-    // Save to Supabase Cloud Database
+    // Insert into Supabase document_requests table
     if (supabase) {
-      supabase.from('student_requests').insert([{
-        ticket_id: request.ticketId,
-        student_name: request.studentName,
-        campus_id: request.campusId,
-        branch: request.branch,
-        year: request.year,
-        partner: request.partner,
-        query: request.query,
-        email: request.email,
-        phone: request.phone,
-        status: request.status,
-        status_type: request.statusType
-      }]).then(({ data, error }) => {
+      try {
+        const { data, error } = await supabase.from('document_requests').insert([{
+          student_name: request.studentName,
+          student_id: request.campusId,
+          email: request.email,
+          course: request.branch,
+          industry_partner: request.partner,
+          document_type: request.query,
+          purpose: request.phone ? `Phone: ${request.phone}` : 'Student Document Request',
+          status: 'Pending'
+        }]).select();
+
         if (error) {
-          console.warn('Supabase sync note (table setup):', error.message);
-        } else {
-          console.log('Saved to Supabase Cloud DB:', request.ticketId);
+          console.error('Supabase document_requests insert error:', error);
+        } else if (data && data.length > 0) {
+          console.log('Saved to document_requests table ID:', data[0].id);
+          request.id = data[0].id;
+          request.ticketId = `DOC-${data[0].id}`;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
         }
-      }).catch(err => console.warn('Supabase DB error:', err));
+      } catch (err) {
+        console.error('Supabase insert exception:', err);
+      }
     }
   }
 
-  // Load from Supabase on start
+  // Load from document_requests on initialization
   if (supabase) {
-    supabase.from('student_requests')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data && data.length > 0) {
-          const formatted = data.map(d => ({
-            ticketId: d.ticket_id,
-            studentName: d.student_name,
-            campusId: d.campus_id,
-            branch: d.branch,
-            year: d.year,
-            partner: d.partner || 'Not Applicable',
-            query: d.query,
-            email: d.email,
-            phone: d.phone,
-            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
-            status: d.status || 'Received (In Review)',
-            statusType: d.status_type || 'received'
-          }));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
-        }
-      }).catch(() => {});
+    fetchSupabaseDocumentRequests();
 
-    // Supabase Real-time updates
+    // Supabase Real-time updates on document_requests table
     try {
-      supabase.channel('public:student_requests')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'student_requests' }, () => {
+      supabase.channel('public:document_requests')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, () => {
           if (modalAdminDashboard && modalAdminDashboard.classList.contains('active')) {
             renderAdminDashboard();
           }
+          renderMyRequests();
         })
         .subscribe();
     } catch (e) {
@@ -460,78 +470,77 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    container.innerHTML = list.map(item => `
-      <div class="req-item-card">
-        <div style="flex: 1;">
-          <div class="req-meta-top">
-            <span class="req-ticket-tag">${escapeHtml(item.ticketId)}</span>
-            <span class="req-date-tag">• ${escapeHtml(item.date)}</span>
+    container.innerHTML = list.map(item => {
+      const statusLower = (item.status || 'Pending').toLowerCase();
+      return `
+        <div class="req-item-card">
+          <div style="flex: 1;">
+            <div class="req-meta-top">
+              <span class="req-ticket-tag">${escapeHtml(item.ticketId || ('DOC-' + (item.id || '')))}</span>
+              <span class="req-date-tag">• ${escapeHtml(item.date)}</span>
+            </div>
+            <div class="req-query-title">${escapeHtml(item.query)}</div>
+            <div class="req-branch-info">${escapeHtml(item.studentName)} | ${escapeHtml(item.branch)}</div>
           </div>
-          <div class="req-query-title">${escapeHtml(item.query)}</div>
-          <div class="req-branch-info">${escapeHtml(item.studentName)} | ${escapeHtml(item.branch)} (${escapeHtml(item.year)})</div>
+          <div>
+            <span class="status-badge status-${statusLower}">${escapeHtml(item.status || 'Pending')}</span>
+          </div>
         </div>
-        <div>
-          <span class="status-badge ${getStatusClass(item.statusType)}">${escapeHtml(item.status)}</span>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  function getStatusClass(type) {
-    if (type === 'resolved') return 'status-resolved';
-    if (type === 'progress') return 'status-progress';
-    return 'status-received';
+      `;
+    }).join('');
   }
 
   async function searchTicket(query) {
-    const q = query.trim().toUpperCase();
+    const q = query.trim();
     if (!q) {
-      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem;">Please enter a valid Ticket ID or Campus Registration Number.</div>`;
+      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem;">Please enter a valid Student ID or Ticket ID.</div>`;
       return;
     }
 
     let list = getStoredRequests();
-    let match = list.find(item => item.ticketId.toUpperCase() === q || item.campusId.toUpperCase() === q);
+    let match = list.find(item => item.campusId === q || (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) || String(item.id) === q);
 
-    // If not found in local cache, search Supabase
+    // If not found in local cache, search Supabase document_requests
     if (!match && supabase) {
       try {
-        const { data } = await supabase.from('student_requests')
-          .select('*')
-          .or(`ticket_id.ilike.%${q}%,campus_id.ilike.%${q}%`)
-          .limit(1);
+        let queryBuilder = supabase.from('document_requests').select('*');
+        if (!isNaN(Number(q))) {
+          queryBuilder = queryBuilder.or(`student_id.eq.${q},id.eq.${Number(q)}`);
+        } else {
+          queryBuilder = queryBuilder.eq('student_id', q);
+        }
+        const { data } = await queryBuilder.limit(1);
         if (data && data.length > 0) {
           const d = data[0];
           match = {
-            ticketId: d.ticket_id,
+            id: d.id,
+            ticketId: `DOC-${d.id}`,
             studentName: d.student_name,
-            campusId: d.campus_id,
-            branch: d.branch,
-            year: d.year,
-            partner: d.partner || 'Not Applicable',
-            query: d.query,
+            campusId: d.student_id,
+            branch: d.course,
+            partner: d.industry_partner || 'Not Applicable',
+            query: d.document_type,
             email: d.email,
-            phone: d.phone,
             date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
-            status: d.status || 'Received (In Review)',
-            statusType: d.status_type || 'received'
+            status: d.status || 'Pending'
           };
         }
       } catch (err) {}
     }
 
     if (match) {
+      const statusLower = (match.status || 'Pending').toLowerCase();
       trackingResult.innerHTML = `
         <div class="tracking-card">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
             <div>
-              <strong style="color: #002244; font-size: 1.05rem;">${escapeHtml(match.ticketId)}</strong>
+              <strong style="color: #002244; font-size: 1.05rem;">${escapeHtml(match.ticketId || ('DOC-' + (match.id || '')))}</strong>
               <div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">Submitted on: ${escapeHtml(match.date)}</div>
             </div>
-            <span class="status-badge ${getStatusClass(match.statusType)}">${escapeHtml(match.status)}</span>
+            <span class="status-badge status-${statusLower}">${escapeHtml(match.status || 'Pending')}</span>
           </div>
           <div style="margin-bottom: 8px; font-size: 0.9rem;">
-            <strong>Request Detail:</strong> ${escapeHtml(match.query)}
+            <strong>Document Requested:</strong> ${escapeHtml(match.query)}
           </div>
           <div style="font-size: 0.85rem; color: #475569;">
             <strong>Student:</strong> ${escapeHtml(match.studentName)} (${escapeHtml(match.campusId)}) | ${escapeHtml(match.branch)}
@@ -542,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
       trackingResult.innerHTML = `
         <div class="tracking-card" style="text-align: center; color: #64748b;">
           <p>No active record matching <strong>"${escapeHtml(query)}"</strong> was found.</p>
-          <small>Check your Reference ID in the confirmation email or "My Requests" tab.</small>
+          <small>Check your Student ID (5-digits) or Reference ID in your confirmation email.</small>
         </div>
       `;
     }
@@ -586,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Admin Dashboard Management
+  // Admin Dashboard Management (Supabase document_requests)
   // --------------------------------------------------------------------------
   if (adminLoginForm) {
     adminLoginForm.addEventListener('submit', (e) => {
@@ -617,24 +626,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function renderAdminDashboard() {
-    const list = getStoredRequests();
+  async function renderAdminDashboard() {
+    const list = await fetchSupabaseDocumentRequests();
 
     // Metric Statistics Calculation
     const totalCount = list.length;
-    const receivedCount = list.filter(r => (r.statusType || 'received') === 'received').length;
-    const progressCount = list.filter(r => (r.statusType || '') === 'progress').length;
-    const resolvedCount = list.filter(r => (r.statusType || '') === 'resolved').length;
+    const pendingCount = list.filter(r => (r.status || '').toLowerCase() === 'pending').length;
+    const approvedCount = list.filter(r => (r.status || '').toLowerCase() === 'approved').length;
+    const completedCount = list.filter(r => (r.status || '').toLowerCase() === 'completed').length;
 
     const statTotalEl = document.getElementById('statTotal');
-    const statReceivedEl = document.getElementById('statReceived');
-    const statProgressEl = document.getElementById('statProgress');
-    const statResolvedEl = document.getElementById('statResolved');
+    const statPendingEl = document.getElementById('statPending');
+    const statApprovedEl = document.getElementById('statApproved');
+    const statCompletedEl = document.getElementById('statCompleted');
 
     if (statTotalEl) statTotalEl.textContent = totalCount;
-    if (statReceivedEl) statReceivedEl.textContent = receivedCount;
-    if (statProgressEl) statProgressEl.textContent = progressCount;
-    if (statResolvedEl) statResolvedEl.textContent = resolvedCount;
+    if (statPendingEl) statPendingEl.textContent = pendingCount;
+    if (statApprovedEl) statApprovedEl.textContent = approvedCount;
+    if (statCompletedEl) statCompletedEl.textContent = completedCount;
 
     // Filters
     const searchQuery = (adminSearchInput ? adminSearchInput.value.trim().toLowerCase() : '');
@@ -644,8 +653,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtered = list.filter(item => {
       // Status Filter
       if (statusFilter !== 'ALL') {
-        const itemStatusType = item.statusType || 'received';
-        if (itemStatusType !== statusFilter) return false;
+        if ((item.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       }
 
       // Partner Filter
@@ -656,7 +664,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Search Filter
       if (searchQuery) {
-        const fullText = `${item.ticketId} ${item.studentName} ${item.campusId} ${item.branch} ${item.query} ${item.email} ${item.phone} ${item.partner || ''}`.toLowerCase();
+        const fullText = `${item.id || ''} ${item.ticketId || ''} ${item.studentName} ${item.campusId} ${item.branch} ${item.query} ${item.email} ${item.partner || ''}`.toLowerCase();
         if (!fullText.includes(searchQuery)) return false;
       }
 
@@ -676,20 +684,21 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    adminTableBody.innerHTML = filtered.map((req, index) => {
+    adminTableBody.innerHTML = filtered.map((req) => {
       const partnerVal = req.partner || 'Not Applicable';
-      const statusTypeVal = req.statusType || 'received';
+      const statusVal = req.status || 'Pending';
+      const statusLower = statusVal.toLowerCase();
+      const recordIdentifier = req.id ? req.id : req.ticketId;
 
       return `
         <tr>
-          <td><span class="table-ticket-id">${escapeHtml(req.ticketId)}</span></td>
+          <td><span class="table-ticket-id">${escapeHtml(req.ticketId || ('DOC-' + req.id))}</span></td>
           <td>
             <div class="table-student-name">${escapeHtml(req.studentName)}</div>
             <span class="table-campus-id">ID: ${escapeHtml(req.campusId)}</span>
           </td>
           <td>
             <div style="font-weight: 600;">${escapeHtml(req.branch)}</div>
-            <div style="font-size: 0.78rem; color: #64748b;">${escapeHtml(req.year)}</div>
           </td>
           <td>
             <span class="partner-badge">${escapeHtml(partnerVal)}</span>
@@ -699,20 +708,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td>
             <div style="font-size: 0.8rem; font-weight: 500;">${escapeHtml(req.email)}</div>
-            <div style="font-size: 0.78rem; color: #64748b;">${escapeHtml(req.phone)}</div>
           </td>
           <td>
             <div style="font-size: 0.78rem; color: #64748b; white-space: nowrap;">${escapeHtml(req.date)}</div>
           </td>
           <td>
-            <select class="status-changer ${statusTypeVal}" onchange="window.updateAdminRequestStatus('${escapeHtml(req.ticketId)}', this.value)">
-              <option value="received" ${statusTypeVal === 'received' ? 'selected' : ''}>Received</option>
-              <option value="progress" ${statusTypeVal === 'progress' ? 'selected' : ''}>In Processing</option>
-              <option value="resolved" ${statusTypeVal === 'resolved' ? 'selected' : ''}>Resolved</option>
+            <select class="status-changer ${statusLower}" onchange="window.updateAdminRequestStatus('${recordIdentifier}', this.value)">
+              <option value="Pending" ${statusLower === 'pending' ? 'selected' : ''}>Pending</option>
+              <option value="Approved" ${statusLower === 'approved' ? 'selected' : ''}>Approved</option>
+              <option value="Completed" ${statusLower === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="Rejected" ${statusLower === 'rejected' ? 'selected' : ''}>Rejected</option>
             </select>
           </td>
           <td>
-            <button type="button" class="btn-delete-row" title="Delete Request" onclick="window.deleteAdminRequest('${escapeHtml(req.ticketId)}')">
+            <button type="button" class="btn-delete-row" title="Delete Request" onclick="window.deleteAdminRequest('${recordIdentifier}')">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             </button>
           </td>
@@ -721,57 +730,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // Live status updater accessible from inline onchange
-  window.updateAdminRequestStatus = function(ticketId, newStatusType) {
+  // Live status updater accessible from inline onchange (Supabase document_requests table)
+  window.updateAdminRequestStatus = async function(recordId, newStatus) {
     const list = getStoredRequests();
-    const item = list.find(r => r.ticketId === ticketId);
-    if (!item) return;
-
-    item.statusType = newStatusType;
-    if (newStatusType === 'resolved') {
-      item.status = 'Resolved (Completed)';
-    } else if (newStatusType === 'progress') {
-      item.status = 'In Processing';
-    } else {
-      item.status = 'Received (In Review)';
+    const item = list.find(r => (r.id == recordId || r.ticketId == recordId || r.campusId == recordId));
+    if (item) {
+      item.status = newStatus;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    renderAdminDashboard();
-
-    // Update in Supabase Cloud DB
+    // Update in Supabase document_requests
     if (supabase) {
-      supabase.from('student_requests')
-        .update({ status: item.status, status_type: item.statusType })
-        .eq('ticket_id', ticketId)
-        .then(({ error }) => {
-          if (error) console.warn('Supabase status update warning:', error.message);
-        });
+      try {
+        let query;
+        if (!isNaN(Number(recordId))) {
+          query = supabase.from('document_requests').update({ status: newStatus }).eq('id', Number(recordId));
+        } else {
+          query = supabase.from('document_requests').update({ status: newStatus }).eq('student_id', recordId);
+        }
+        const { error } = await query;
+        if (error) console.error('Supabase status update error:', error);
+      } catch (err) {
+        console.error('Supabase update exception:', err);
+      }
     }
 
-    showToast(`Status for ${ticketId} updated to ${item.status}.`, 'success');
+    renderAdminDashboard();
+    showToast(`Status updated to ${newStatus}.`, 'success');
   };
 
-  // Delete request
-  window.deleteAdminRequest = function(ticketId) {
-    if (!confirm(`Are you sure you want to remove request ticket ${ticketId}?`)) return;
+  // Delete request from document_requests table
+  window.deleteAdminRequest = async function(recordId) {
+    if (!confirm(`Are you sure you want to remove this request record?`)) return;
 
     let list = getStoredRequests();
-    list = list.filter(r => r.ticketId !== ticketId);
+    list = list.filter(r => (r.id != recordId && r.ticketId != recordId && r.campusId != recordId));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    renderAdminDashboard();
 
-    // Delete in Supabase Cloud DB
     if (supabase) {
-      supabase.from('student_requests')
-        .delete()
-        .eq('ticket_id', ticketId)
-        .then(({ error }) => {
-          if (error) console.warn('Supabase delete warning:', error.message);
-        });
+      try {
+        if (!isNaN(Number(recordId))) {
+          await supabase.from('document_requests').delete().eq('id', Number(recordId));
+        } else {
+          await supabase.from('document_requests').delete().eq('student_id', recordId);
+        }
+      } catch (err) {
+        console.error('Supabase delete exception:', err);
+      }
     }
 
-    showToast(`Request ${ticketId} removed.`, 'info');
+    renderAdminDashboard();
+    showToast(`Request removed.`, 'info');
   };
 
   // Filter and search listeners
@@ -788,26 +797,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const headers = ['Ticket ID', 'Student Name', 'Campus ID', 'Branch', 'Year', 'Program Partner', 'Request Query', 'Email', 'Phone', 'Date', 'Status'];
+      const headers = ['ID', 'Student Name', 'Student ID', 'Course', 'Industry Partner', 'Document Type', 'Email', 'Date', 'Status'];
       const rows = list.map(r => [
-        `"${(r.ticketId || '').replace(/"/g, '""')}"`,
+        `"${(r.id || r.ticketId || '').replace ? (r.id || r.ticketId || '').replace(/"/g, '""') : (r.id || '')}"`,
         `"${(r.studentName || '').replace(/"/g, '""')}"`,
         `"${(r.campusId || '').replace(/"/g, '""')}"`,
         `"${(r.branch || '').replace(/"/g, '""')}"`,
-        `"${(r.year || '').replace(/"/g, '""')}"`,
         `"${(r.partner || 'Not Applicable').replace(/"/g, '""')}"`,
         `"${(r.query || '').replace(/"/g, '""')}"`,
         `"${(r.email || '').replace(/"/g, '""')}"`,
-        `"${(r.phone || '').replace(/"/g, '""')}"`,
         `"${(r.date || '').replace(/"/g, '""')}"`,
-        `"${(r.status || '').replace(/"/g, '""')}"`
+        `"${(r.status || 'Pending').replace(/"/g, '""')}"`
       ]);
 
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
       const link = document.createElement('a');
       link.setAttribute('href', encodedUri);
-      link.setAttribute('download', `Yenepoya_Student_Requests_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `Yenepoya_Document_Requests_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -816,38 +823,34 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Seed initial sample data for demonstration
+  // Seed initial sample data for demonstration if clean
   // --------------------------------------------------------------------------
   function seedSampleData() {
     if (!localStorage.getItem(STORAGE_KEY)) {
       const initialRequests = [
         {
-          ticketId: 'YEN-2026-10492',
+          id: 101,
+          ticketId: 'DOC-101',
           studentName: 'Mohammed Rayan',
           campusId: '22084',
-          branch: 'Computer Science & Engineering',
+          branch: 'Computer Science & Engineering (3rd Year)',
           partner: 'NXWave',
-          query: 'Bonafide Certificate for Visa Application',
+          query: 'Bonafide Certificate',
           email: 'm.rayan@yenepoya.edu.in',
-          year: '3rd Year',
-          phone: '9845123450',
           date: 'Aug 24, 2026, 11:30 AM',
-          status: 'Resolved (Issued)',
-          statusType: 'resolved'
+          status: 'Completed'
         },
         {
-          ticketId: 'YEN-2026-10853',
-          studentName: 'Mohammed Rayan',
-          campusId: '22084',
-          branch: 'Computer Science & Engineering',
+          id: 102,
+          ticketId: 'DOC-102',
+          studentName: 'Aisha K.',
+          campusId: '34521',
+          branch: 'Information Technology (2nd Year)',
           partner: 'IBM',
-          query: 'Semester Grade Card Duplicate Request',
-          email: 'm.rayan@yenepoya.edu.in',
-          year: '3rd Year',
-          phone: '9845123450',
+          query: 'Transcript / Academic Record',
+          email: 'aisha.k@yenepoya.edu.in',
           date: 'Aug 27, 2026, 03:15 PM',
-          status: 'In Processing',
-          statusType: 'progress'
+          status: 'Pending'
         }
       ];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(initialRequests));

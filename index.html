@@ -757,31 +757,32 @@
             <div class="stat-num" id="statTotal">0</div>
             <div class="stat-label">Total Requests</div>
           </div>
-          <div class="stat-card stat-received">
-            <div class="stat-num" id="statReceived">0</div>
-            <div class="stat-label">Received / In Review</div>
+          <div class="stat-card stat-pending">
+            <div class="stat-num" id="statPending">0</div>
+            <div class="stat-label">Pending Review</div>
           </div>
-          <div class="stat-card stat-progress">
-            <div class="stat-num" id="statProgress">0</div>
-            <div class="stat-label">In Processing</div>
+          <div class="stat-card stat-approved">
+            <div class="stat-num" id="statApproved">0</div>
+            <div class="stat-label">Approved</div>
           </div>
-          <div class="stat-card stat-resolved">
-            <div class="stat-num" id="statResolved">0</div>
-            <div class="stat-label">Resolved / Issued</div>
+          <div class="stat-card stat-completed">
+            <div class="stat-num" id="statCompleted">0</div>
+            <div class="stat-label">Completed</div>
           </div>
         </div>
 
         <!-- Toolbar & Filtering -->
         <div class="admin-toolbar">
           <div class="admin-search-wrapper">
-            <input type="text" id="adminSearchInput" class="form-control" placeholder="Search by student name, 5-digit campus ID, ticket ID, branch...">
+            <input type="text" id="adminSearchInput" class="form-control" placeholder="Search by student name, Student ID, document type, course...">
           </div>
           <div class="admin-filter-group">
             <select id="adminStatusFilter" class="form-control select-control admin-select">
               <option value="ALL">All Statuses</option>
-              <option value="received">Received</option>
-              <option value="progress">In Processing</option>
-              <option value="resolved">Resolved</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Completed">Completed</option>
             </select>
             <select id="adminPartnerFilter" class="form-control select-control admin-select">
               <option value="ALL">All Partners</option>
