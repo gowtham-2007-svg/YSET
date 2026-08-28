@@ -524,7 +524,7 @@
 
   <!-- Modal: Request Tracking -->
   <div class="modal-backdrop" id="modalTracking">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-tracking-dialog">
       <div class="modal-header">
         <div class="modal-title-with-icon">
           <div class="modal-header-icon">
@@ -535,10 +535,10 @@
         <button type="button" class="modal-close" data-close="modalTracking">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-description">Enter your Ticket Reference Number or Campus ID to inspect the current status of your submitted request.</p>
+        <p class="modal-description">Enter your 5-digit Student ID or Request Number to inspect the live status and handover timeline of your document.</p>
         <div class="tracking-search-bar">
-          <input type="text" id="trackInput" class="form-control" placeholder="e.g. YEN-2026-9281 or 22CS084">
-          <button type="button" class="btn-track" id="trackSubmitBtn">Track</button>
+          <input type="text" id="trackInput" class="form-control" placeholder="e.g. 43637 or REQ-101">
+          <button type="button" class="btn-track" id="trackSubmitBtn">Track Status</button>
         </div>
         <div id="trackingResult" class="tracking-result-area"></div>
       </div>
@@ -780,9 +780,11 @@
             <select id="adminStatusFilter" class="form-control select-control admin-select">
               <option value="ALL">All Statuses</option>
               <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Processing">Processing</option>
+              <option value="Ready">Ready</option>
               <option value="Completed">Completed</option>
+              <option value="Rejected">Rejected</option>
             </select>
             <select id="adminPartnerFilter" class="form-control select-control admin-select">
               <option value="ALL">All Partners</option>

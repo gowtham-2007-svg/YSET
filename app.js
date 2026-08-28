@@ -529,22 +529,150 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (match) {
-      const statusLower = (match.status || 'Pending').toLowerCase();
+      const statusRaw = match.status || 'Pending';
+      const statusLower = statusRaw.toLowerCase();
+
+      // Step mapping: 1: Request Submitted, 2: Accepted, 3: Processing, 4: Ready, 5: Hand Over
+      let currentStep = 1;
+      let handoverTimeText = "Tomorrow at 11:00 AM";
+      let handoverSub = "Location: Administrative Office, Counter 3 (Student Section)";
+
+      if (statusLower === 'pending') {
+        currentStep = 1;
+        handoverTimeText = "Tomorrow at 11:00 AM";
+      } else if (statusLower === 'accepted' || statusLower === 'approved') {
+        currentStep = 2;
+        handoverTimeText = "Tomorrow at 11:00 AM";
+      } else if (statusLower === 'processing' || statusLower === 'in processing') {
+        currentStep = 3;
+        handoverTimeText = "Today by 4:00 PM";
+      } else if (statusLower === 'ready' || statusLower === 'ready for pickup') {
+        currentStep = 4;
+        handoverTimeText = "Ready for Collection Now";
+        handoverSub = "Available immediately at Administrative Office, Counter 3";
+      } else if (statusLower === 'completed' || statusLower === 'hand over' || statusLower === 'handed over') {
+        currentStep = 5;
+        handoverTimeText = "Handed Over & Completed";
+        handoverSub = "Document successfully issued to student";
+      } else if (statusLower === 'rejected') {
+        currentStep = 0;
+        handoverTimeText = "Request Not Approved";
+        handoverSub = "Please visit Administrative Office for clarification";
+      }
+
+      // Render comprehensive tracking card with visual timeline
       trackingResult.innerHTML = `
         <div class="tracking-card">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+          <!-- Top Header with ID & Live Status Badge -->
+          <div class="tracking-card-header">
             <div>
-              <strong style="color: #002244; font-size: 1.05rem;">${escapeHtml(match.ticketId || ('DOC-' + (match.id || '')))}</strong>
-              <div style="color: #64748b; font-size: 0.8rem; margin-top: 2px;">Submitted on: ${escapeHtml(match.date)}</div>
+              <span class="tracking-req-label">REQUEST ID</span>
+              <div class="tracking-req-id">${escapeHtml(match.ticketId || ('REQ-' + match.id))}</div>
+              <div class="tracking-sub-date">Submitted on: ${escapeHtml(match.date)}</div>
             </div>
-            <span class="status-badge status-${statusLower}">${escapeHtml(match.status || 'Pending')}</span>
+            <div>
+              <span class="status-badge status-${statusLower}">${escapeHtml(statusRaw)}</span>
+            </div>
           </div>
-          <div style="margin-bottom: 8px; font-size: 0.9rem;">
-            <strong>Document Requested:</strong> ${escapeHtml(match.query)}
+
+          <!-- Document & Student Snapshot -->
+          <div class="tracking-doc-info-box">
+            <div class="tracking-info-row">
+              <span class="info-label">DOCUMENT NAME:</span>
+              <span class="info-value doc-name-highlight">${escapeHtml(match.query)}</span>
+            </div>
+            <div class="tracking-info-row">
+              <span class="info-label">STUDENT:</span>
+              <span class="info-value">${escapeHtml(match.studentName)} (${escapeHtml(match.campusId)}) | ${escapeHtml(match.branch)}</span>
+            </div>
           </div>
-          <div style="font-size: 0.85rem; color: #475569;">
-            <strong>Student:</strong> ${escapeHtml(match.studentName)} (${escapeHtml(match.campusId)}) | ${escapeHtml(match.branch)}
+
+          <!-- Expected Handover Box -->
+          <div class="tracking-handover-box">
+            <div class="handover-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <div class="handover-label">EXPECTED HANDOVER TIME</div>
+              <div class="handover-time">${handoverTimeText}</div>
+              <small class="handover-location">${handoverSub}</small>
+            </div>
           </div>
+
+          <!-- 5-Step Visual Timeline: Request Submitted -> Accepted -> Processing -> Ready -> Hand Over -->
+          ${currentStep > 0 ? `
+          <div class="visual-timeline-wrapper">
+            <div class="timeline-title">REQUEST TIMELINE PROGRESS</div>
+            <div class="timeline-stepper">
+              
+              <!-- 1. Request Submitted -->
+              <div class="timeline-step ${currentStep >= 1 ? 'completed' : ''} ${currentStep === 1 ? 'active' : ''}">
+                <div class="step-marker">
+                  ${currentStep > 1 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '1'}
+                </div>
+                <div class="step-text">
+                  <div class="step-name">Request Submitted</div>
+                  <div class="step-sub">Logged</div>
+                </div>
+              </div>
+              <div class="timeline-line ${currentStep >= 2 ? 'active' : ''}"></div>
+
+              <!-- 2. Accepted -->
+              <div class="timeline-step ${currentStep >= 2 ? 'completed' : ''} ${currentStep === 2 ? 'active' : ''}">
+                <div class="step-marker">
+                  ${currentStep > 2 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '2'}
+                </div>
+                <div class="step-text">
+                  <div class="step-name">Accepted</div>
+                  <div class="step-sub">Verified</div>
+                </div>
+              </div>
+              <div class="timeline-line ${currentStep >= 3 ? 'active' : ''}"></div>
+
+              <!-- 3. Processing -->
+              <div class="timeline-step ${currentStep >= 3 ? 'completed' : ''} ${currentStep === 3 ? 'active' : ''}">
+                <div class="step-marker">
+                  ${currentStep > 3 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '3'}
+                </div>
+                <div class="step-text">
+                  <div class="step-name">Processing</div>
+                  <div class="step-sub">Printing</div>
+                </div>
+              </div>
+              <div class="timeline-line ${currentStep >= 4 ? 'active' : ''}"></div>
+
+              <!-- 4. Ready -->
+              <div class="timeline-step ${currentStep >= 4 ? 'completed' : ''} ${currentStep === 4 ? 'active' : ''}">
+                <div class="step-marker">
+                  ${currentStep > 4 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '4'}
+                </div>
+                <div class="step-text">
+                  <div class="step-name">Ready</div>
+                  <div class="step-sub">Attested</div>
+                </div>
+              </div>
+              <div class="timeline-line ${currentStep >= 5 ? 'active' : ''}"></div>
+
+              <!-- 5. Hand Over -->
+              <div class="timeline-step ${currentStep >= 5 ? 'completed' : ''} ${currentStep === 5 ? 'active' : ''}">
+                <div class="step-marker">
+                  ${currentStep === 5 ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : '5'}
+                </div>
+                <div class="step-text">
+                  <div class="step-name">Hand Over</div>
+                  <div class="step-sub">Collected</div>
+                </div>
+              </div>
+
+            </div>
+          </div>` : `
+          <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: 14px 18px; color: #991b1b; font-size: 0.88rem;">
+            <strong>Request Notice:</strong> This request could not be processed. Please check in with the Student Administration Counter.
+          </div>
+          `}
         </div>
       `;
     } else {
@@ -715,8 +843,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>
             <select class="status-changer ${statusLower}" onchange="window.updateAdminRequestStatus('${recordIdentifier}', this.value)">
               <option value="Pending" ${statusLower === 'pending' ? 'selected' : ''}>Pending</option>
-              <option value="Approved" ${statusLower === 'approved' ? 'selected' : ''}>Approved</option>
-              <option value="Completed" ${statusLower === 'completed' ? 'selected' : ''}>Completed</option>
+              <option value="Accepted" ${statusLower === 'accepted' || statusLower === 'approved' ? 'selected' : ''}>Accepted</option>
+              <option value="Processing" ${statusLower === 'processing' || statusLower === 'in processing' ? 'selected' : ''}>Processing</option>
+              <option value="Ready" ${statusLower === 'ready' || statusLower === 'ready for pickup' ? 'selected' : ''}>Ready</option>
+              <option value="Completed" ${statusLower === 'completed' || statusLower === 'hand over' || statusLower === 'handed over' ? 'selected' : ''}>Completed</option>
               <option value="Rejected" ${statusLower === 'rejected' ? 'selected' : ''}>Rejected</option>
             </select>
           </td>
