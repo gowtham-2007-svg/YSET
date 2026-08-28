@@ -568,64 +568,8 @@ document.addEventListener('DOMContentLoaded', () => {
     searchTicket(ticketId);
   };
 
-  async function searchTicket(query) {
-    const q = (query || '').trim();
-    if (!q) {
-      const list = getStoredRequests();
-      if (list.length > 0) {
-        return searchTicket(list[0].campusId || list[0].ticketId);
-      }
-      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem; padding: 12px 0;">Please enter your 5-digit Student ID or Request Number.</div>`;
-      return;
-    }
-
-    trackingResult.innerHTML = `
-      <div class="tracking-card" style="text-align: center; padding: 28px 20px; color: #64748b;">
-        <div style="font-weight: 600; color: #002244; margin-bottom: 4px;">Searching Request Records...</div>
-        <small style="color: #94a3b8;">Checking live database status for "${escapeHtml(q)}"</small>
-      </div>
-    `;
-
-    let list = getStoredRequests();
-    let match = list.find(item => 
-      item.campusId === q || 
-      (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) || 
-      String(item.id) === q ||
-      (item.studentName && item.studentName.toLowerCase().includes(q.toLowerCase()))
-    );
-
-    // If not found in local cache, search Supabase document_requests
-    if (!match && supabase) {
-      try {
-        let queryBuilder = supabase.from('document_requests').select('*');
-        if (!isNaN(Number(q))) {
-          queryBuilder = queryBuilder.or(`student_id.eq.${q},id.eq.${Number(q)}`);
-        } else {
-          queryBuilder = queryBuilder.or(`student_id.ilike.%${q}%,student_name.ilike.%${q}%`);
-        }
-        const { data } = await queryBuilder.limit(1);
-        if (data && data.length > 0) {
-          const d = data[0];
-          match = {
-            id: d.id,
-            ticketId: `DOC-${d.id}`,
-            studentName: d.student_name,
-            campusId: d.student_id,
-            branch: d.course,
-            partner: d.industry_partner || 'Not Applicable',
-            query: d.document_type,
-            email: d.email,
-            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
-            status: d.status || 'Pending'
-          };
-        }
-      } catch (err) {
-        console.warn('Supabase query search error:', err);
-      }
-    }
-
-    if (match) {
-      const statusRaw = match.status || 'Pending';
+  function renderTrackingCard(match) {
+    const statusRaw = match.status || 'Pending';
       const statusLower = statusRaw.toLowerCase();
 
       // Step mapping: 1: Request Submitted, 2: Accepted, 3: Processing, 4: Ready, 5: Hand Over
@@ -771,11 +715,114 @@ document.addEventListener('DOMContentLoaded', () => {
           `}
         </div>
       `;
+  }
+
+  function searchTicket(query) {
+    const q = (query || '').trim();
+
+    // If empty, try auto-load from personal requests
+    if (!q) {
+      const personal = getMyPersonalRequests();
+      if (personal.length > 0) {
+        return searchTicket(personal[0].campusId || personal[0].ticketId);
+      }
+      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem; padding: 12px 0;">Please enter your 5-digit Student ID or Request Number.</div>`;
+      return;
+    }
+
+    // STEP 1: Search personal requests first (instant)
+    const personalList = getMyPersonalRequests();
+    let match = personalList.find(item =>
+      item.campusId === q ||
+      (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) ||
+      String(item.id) === q
+    );
+
+    // STEP 2: Search admin cache as fallback (still instant — no network)
+    if (!match) {
+      const adminList = getStoredAdminRequests();
+      match = adminList.find(item =>
+        item.campusId === q ||
+        (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) ||
+        String(item.id) === q
+      );
+    }
+
+    // STEP 3: Render instantly if found locally
+    if (match) {
+      renderTrackingCard(match);
+
+      // STEP 4: Background sync — silently fetch latest status from Supabase and refresh
+      if (supabase) {
+        const searchId = match.id || q;
+        let queryBuilder = supabase.from('document_requests').select('status, id');
+        if (!isNaN(Number(searchId))) {
+          queryBuilder = queryBuilder.or(`student_id.eq.${q},id.eq.${Number(searchId)}`);
+        } else {
+          queryBuilder = queryBuilder.eq('student_id', q);
+        }
+        queryBuilder.limit(1).then(({ data }) => {
+          if (data && data.length > 0 && data[0].status !== match.status) {
+            match.status = data[0].status;
+            renderTrackingCard(match); // re-render silently with updated status
+          }
+        }).catch(() => {});
+      }
+      return;
+    }
+
+    // STEP 5: Only go to Supabase if not found locally at all
+    trackingResult.innerHTML = `
+      <div class="tracking-card" style="text-align: center; padding: 22px 20px; color: #64748b;">
+        <div style="font-weight: 600; color: #002244; margin-bottom: 4px;">Looking up record...</div>
+        <small style="color: #94a3b8;">Searching database for "${escapeHtml(q)}"</small>
+      </div>
+    `;
+
+    if (supabase) {
+      let queryBuilder = supabase.from('document_requests').select('*');
+      if (!isNaN(Number(q))) {
+        queryBuilder = queryBuilder.or(`student_id.eq.${q},id.eq.${Number(q)}`);
+      } else {
+        queryBuilder = queryBuilder.or(`student_id.ilike.%${q}%,student_name.ilike.%${q}%`);
+      }
+      queryBuilder.limit(1).then(({ data }) => {
+        if (data && data.length > 0) {
+          const d = data[0];
+          const remoteMatch = {
+            id: d.id,
+            ticketId: `DOC-${d.id}`,
+            studentName: d.student_name,
+            campusId: d.student_id,
+            branch: d.course,
+            partner: d.industry_partner || 'Not Applicable',
+            query: d.document_type,
+            email: d.email,
+            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
+            status: d.status || 'Pending'
+          };
+          renderTrackingCard(remoteMatch);
+        } else {
+          trackingResult.innerHTML = `
+            <div class="tracking-card" style="text-align: center; color: #64748b;">
+              <p>No active record matching <strong>"${escapeHtml(q)}"</strong> was found.</p>
+              <small>Check your 5-digit Student ID or Reference ID in your confirmation email.</small>
+            </div>
+          `;
+        }
+      }).catch(() => {
+        trackingResult.innerHTML = `
+          <div class="tracking-card" style="text-align: center; color: #64748b;">
+            <p>No record found for <strong>"${escapeHtml(q)}"</strong>.</p>
+            <small>Check your 5-digit Student ID or Reference ID in your confirmation email.</small>
+          </div>
+        `;
+      });
     } else {
       trackingResult.innerHTML = `
         <div class="tracking-card" style="text-align: center; color: #64748b;">
-          <p>No active record matching <strong>"${escapeHtml(query)}"</strong> was found.</p>
-          <small>Check your Student ID (5-digits) or Reference ID in your confirmation email.</small>
+          <p>No active record matching <strong>"${escapeHtml(q)}"</strong> was found.</p>
+          <small>Check your 5-digit Student ID or Reference ID in your confirmation email.</small>
         </div>
       `;
     }
