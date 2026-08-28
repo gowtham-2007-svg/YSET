@@ -30,12 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const navTracking = document.getElementById('navTracking');
   const navFeedback = document.getElementById('navFeedback');
   const navTerms = document.getElementById('navTerms');
+  const navAdmin = document.getElementById('navAdmin');
   const supportDeskLink = document.getElementById('supportDeskLink');
 
   const mobNavMyRequests = document.getElementById('mobNavMyRequests');
   const mobNavTracking = document.getElementById('mobNavTracking');
   const mobNavFeedback = document.getElementById('mobNavFeedback');
   const mobNavTerms = document.getElementById('mobNavTerms');
+  const mobNavAdmin = document.getElementById('mobNavAdmin');
 
   // Modal Dialogs
   const modalMyRequests = document.getElementById('modalMyRequests');
@@ -44,6 +46,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalTerms = document.getElementById('modalTerms');
   const modalSupport = document.getElementById('modalSupport');
   const modalSuccess = document.getElementById('modalSuccess');
+  const modalAdminLogin = document.getElementById('modalAdminLogin');
+  const modalAdminDashboard = document.getElementById('modalAdminDashboard');
+
+  // Admin Dashboard Elements
+  const adminLoginForm = document.getElementById('adminLoginForm');
+  const adminPasscode = document.getElementById('adminPasscode');
+  const adminPasscodeError = document.getElementById('adminPasscodeError');
+  const btnAdminLogout = document.getElementById('btnAdminLogout');
+  const btnExportCSV = document.getElementById('btnExportCSV');
+  const adminSearchInput = document.getElementById('adminSearchInput');
+  const adminStatusFilter = document.getElementById('adminStatusFilter');
+  const adminPartnerFilter = document.getElementById('adminPartnerFilter');
+  const adminTableBody = document.getElementById('adminTableBody');
+
+  let isAdminAuthenticated = false;
 
   // Tracking Elements
   const trackInput = document.getElementById('trackInput');
@@ -127,6 +144,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (navTerms) navTerms.addEventListener('click', () => { openModal(modalTerms); });
   if (mobNavTerms) mobNavTerms.addEventListener('click', () => { openModal(modalTerms); });
+
+  function handleAdminClick() {
+    if (isAdminAuthenticated) {
+      renderAdminDashboard();
+      openModal(modalAdminDashboard);
+    } else {
+      openModal(modalAdminLogin);
+      setTimeout(() => { if (adminPasscode) adminPasscode.focus(); }, 150);
+    }
+  }
+
+  if (navAdmin) navAdmin.addEventListener('click', handleAdminClick);
+  if (mobNavAdmin) mobNavAdmin.addEventListener('click', handleAdminClick);
 
   if (supportDeskLink) supportDeskLink.addEventListener('click', (e) => { e.preventDefault(); openModal(modalSupport); });
 
@@ -448,6 +478,214 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
+  // Admin Dashboard Management
+  // --------------------------------------------------------------------------
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const enteredPasscode = adminPasscode.value.trim();
+
+      // Acceptable administrative passcodes
+      if (enteredPasscode === 'admin123' || enteredPasscode === '1234' || enteredPasscode === 'admin') {
+        isAdminAuthenticated = true;
+        adminPasscode.value = '';
+        if (adminPasscodeError) adminPasscodeError.style.display = 'none';
+        closeModal(modalAdminLogin);
+        renderAdminDashboard();
+        openModal(modalAdminDashboard);
+        showToast('Admin access authorized.', 'success');
+      } else {
+        if (adminPasscodeError) adminPasscodeError.style.display = 'block';
+        adminPasscode.classList.add('is-invalid');
+      }
+    });
+  }
+
+  if (btnAdminLogout) {
+    btnAdminLogout.addEventListener('click', () => {
+      isAdminAuthenticated = false;
+      closeModal(modalAdminDashboard);
+      showToast('Admin logged out successfully.', 'info');
+    });
+  }
+
+  function renderAdminDashboard() {
+    const list = getStoredRequests();
+
+    // Metric Statistics Calculation
+    const totalCount = list.length;
+    const receivedCount = list.filter(r => (r.statusType || 'received') === 'received').length;
+    const progressCount = list.filter(r => (r.statusType || '') === 'progress').length;
+    const resolvedCount = list.filter(r => (r.statusType || '') === 'resolved').length;
+
+    const statTotalEl = document.getElementById('statTotal');
+    const statReceivedEl = document.getElementById('statReceived');
+    const statProgressEl = document.getElementById('statProgress');
+    const statResolvedEl = document.getElementById('statResolved');
+
+    if (statTotalEl) statTotalEl.textContent = totalCount;
+    if (statReceivedEl) statReceivedEl.textContent = receivedCount;
+    if (statProgressEl) statProgressEl.textContent = progressCount;
+    if (statResolvedEl) statResolvedEl.textContent = resolvedCount;
+
+    // Filters
+    const searchQuery = (adminSearchInput ? adminSearchInput.value.trim().toLowerCase() : '');
+    const statusFilter = (adminStatusFilter ? adminStatusFilter.value : 'ALL');
+    const partnerFilter = (adminPartnerFilter ? adminPartnerFilter.value : 'ALL');
+
+    const filtered = list.filter(item => {
+      // Status Filter
+      if (statusFilter !== 'ALL') {
+        const itemStatusType = item.statusType || 'received';
+        if (itemStatusType !== statusFilter) return false;
+      }
+
+      // Partner Filter
+      if (partnerFilter !== 'ALL') {
+        const itemPartner = item.partner || 'Not Applicable';
+        if (itemPartner !== partnerFilter) return false;
+      }
+
+      // Search Filter
+      if (searchQuery) {
+        const fullText = `${item.ticketId} ${item.studentName} ${item.campusId} ${item.branch} ${item.query} ${item.email} ${item.phone} ${item.partner || ''}`.toLowerCase();
+        if (!fullText.includes(searchQuery)) return false;
+      }
+
+      return true;
+    });
+
+    if (!adminTableBody) return;
+
+    if (filtered.length === 0) {
+      adminTableBody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 36px; color: #94a3b8;">
+            No student requests matching the current filters.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    adminTableBody.innerHTML = filtered.map((req, index) => {
+      const partnerVal = req.partner || 'Not Applicable';
+      const statusTypeVal = req.statusType || 'received';
+
+      return `
+        <tr>
+          <td><span class="table-ticket-id">${escapeHtml(req.ticketId)}</span></td>
+          <td>
+            <div class="table-student-name">${escapeHtml(req.studentName)}</div>
+            <span class="table-campus-id">ID: ${escapeHtml(req.campusId)}</span>
+          </td>
+          <td>
+            <div style="font-weight: 600;">${escapeHtml(req.branch)}</div>
+            <div style="font-size: 0.78rem; color: #64748b;">${escapeHtml(req.year)}</div>
+          </td>
+          <td>
+            <span class="partner-badge">${escapeHtml(partnerVal)}</span>
+          </td>
+          <td style="max-width: 220px;">
+            <div style="font-weight: 600; color: #002244;">${escapeHtml(req.query)}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.8rem; font-weight: 500;">${escapeHtml(req.email)}</div>
+            <div style="font-size: 0.78rem; color: #64748b;">${escapeHtml(req.phone)}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.78rem; color: #64748b; white-space: nowrap;">${escapeHtml(req.date)}</div>
+          </td>
+          <td>
+            <select class="status-changer ${statusTypeVal}" onchange="window.updateAdminRequestStatus('${escapeHtml(req.ticketId)}', this.value)">
+              <option value="received" ${statusTypeVal === 'received' ? 'selected' : ''}>Received</option>
+              <option value="progress" ${statusTypeVal === 'progress' ? 'selected' : ''}>In Processing</option>
+              <option value="resolved" ${statusTypeVal === 'resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="btn-delete-row" title="Delete Request" onclick="window.deleteAdminRequest('${escapeHtml(req.ticketId)}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Live status updater accessible from inline onchange
+  window.updateAdminRequestStatus = function(ticketId, newStatusType) {
+    const list = getStoredRequests();
+    const item = list.find(r => r.ticketId === ticketId);
+    if (!item) return;
+
+    item.statusType = newStatusType;
+    if (newStatusType === 'resolved') {
+      item.status = 'Resolved (Completed)';
+    } else if (newStatusType === 'progress') {
+      item.status = 'In Processing';
+    } else {
+      item.status = 'Received (In Review)';
+    }
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    renderAdminDashboard();
+    showToast(`Status for ${ticketId} updated to ${item.status}.`, 'success');
+  };
+
+  // Delete request
+  window.deleteAdminRequest = function(ticketId) {
+    if (!confirm(`Are you sure you want to remove request ticket ${ticketId}?`)) return;
+
+    let list = getStoredRequests();
+    list = list.filter(r => r.ticketId !== ticketId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    renderAdminDashboard();
+    showToast(`Request ${ticketId} removed.`, 'info');
+  };
+
+  // Filter and search listeners
+  if (adminSearchInput) adminSearchInput.addEventListener('input', renderAdminDashboard);
+  if (adminStatusFilter) adminStatusFilter.addEventListener('change', renderAdminDashboard);
+  if (adminPartnerFilter) adminPartnerFilter.addEventListener('change', renderAdminDashboard);
+
+  // CSV Export utility
+  if (btnExportCSV) {
+    btnExportCSV.addEventListener('click', () => {
+      const list = getStoredRequests();
+      if (list.length === 0) {
+        showToast('No requests available to export.', 'info');
+        return;
+      }
+
+      const headers = ['Ticket ID', 'Student Name', 'Campus ID', 'Branch', 'Year', 'Program Partner', 'Request Query', 'Email', 'Phone', 'Date', 'Status'];
+      const rows = list.map(r => [
+        `"${(r.ticketId || '').replace(/"/g, '""')}"`,
+        `"${(r.studentName || '').replace(/"/g, '""')}"`,
+        `"${(r.campusId || '').replace(/"/g, '""')}"`,
+        `"${(r.branch || '').replace(/"/g, '""')}"`,
+        `"${(r.year || '').replace(/"/g, '""')}"`,
+        `"${(r.partner || 'Not Applicable').replace(/"/g, '""')}"`,
+        `"${(r.query || '').replace(/"/g, '""')}"`,
+        `"${(r.email || '').replace(/"/g, '""')}"`,
+        `"${(r.phone || '').replace(/"/g, '""')}"`,
+        `"${(r.date || '').replace(/"/g, '""')}"`,
+        `"${(r.status || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `Yenepoya_Student_Requests_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Student requests exported to CSV.', 'success');
+    });
+  }
+
+  // --------------------------------------------------------------------------
   // Seed initial sample data for demonstration
   // --------------------------------------------------------------------------
   function seedSampleData() {
@@ -458,6 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
           studentName: 'Mohammed Rayan',
           campusId: '22084',
           branch: 'Computer Science & Engineering',
+          partner: 'NXWave',
           query: 'Bonafide Certificate for Visa Application',
           email: 'm.rayan@yenepoya.edu.in',
           year: '3rd Year',
@@ -471,6 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
           studentName: 'Mohammed Rayan',
           campusId: '22084',
           branch: 'Computer Science & Engineering',
+          partner: 'IBM',
           query: 'Semester Grade Card Duplicate Request',
           email: 'm.rayan@yenepoya.edu.in',
           year: '3rd Year',

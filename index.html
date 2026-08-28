@@ -142,6 +142,17 @@
           </div>
           <span>Terms & Conditions</span>
         </button>
+
+        <button type="button" class="nav-item nav-item-admin" id="navAdmin">
+          <div class="nav-icon-circle admin-circle">
+            <!-- Lock / Shield Icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <span>Admin</span>
+        </button>
       </nav>
 
       <!-- Mobile Hamburger Toggle -->
@@ -177,6 +188,12 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
         </span>
         Terms & Conditions
+      </button>
+      <button type="button" class="mobile-nav-item" id="mobNavAdmin">
+        <span class="nav-icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </span>
+        Admin Portal
       </button>
     </div>
   </header>
@@ -679,6 +696,126 @@
       <div class="modal-success-actions">
         <button type="button" class="btn-track-now" id="btnTrackNow">Track Status</button>
         <button type="button" class="btn-done" data-close="modalSuccess">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Passcode Login -->
+  <div class="modal-backdrop" id="modalAdminLogin">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <h3>Admin Authorization</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalAdminLogin">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Enter administrative passcode to manage student requests.</p>
+        <form id="adminLoginForm">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="adminPasscode" class="form-label">PASSCODE</label>
+            <input type="password" id="adminPasscode" class="form-control" placeholder="Enter PIN (default: admin123)" autocomplete="current-password" required>
+            <div class="error-msg" id="adminPasscodeError">Incorrect passcode. Try again.</div>
+          </div>
+          <button type="submit" class="btn-submit" style="height: 44px;">Login to Admin Desk</button>
+          <div style="text-align: center; margin-top: 10px; font-size: 0.78rem; color: #94a3b8;">Default passcode: <code style="background: #f1f5f9; padding: 2px 5px; border-radius: 4px;">admin123</code></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Dashboard -->
+  <div class="modal-backdrop" id="modalAdminDashboard">
+    <div class="modal-dialog modal-admin">
+      <div class="modal-header admin-modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon admin-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <div>
+            <h3>Administrative Request Desk</h3>
+            <span class="admin-subtitle">Yenepoya (Deemed to be University) Student Request Management</span>
+          </div>
+        </div>
+        <div class="admin-header-actions">
+          <button type="button" class="btn-admin-action" id="btnExportCSV" title="Export all requests to CSV">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export CSV
+          </button>
+          <button type="button" class="btn-admin-action btn-logout" id="btnAdminLogout">Logout</button>
+          <button type="button" class="modal-close" data-close="modalAdminDashboard">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body admin-dashboard-body">
+        
+        <!-- Metric Statistics Cards -->
+        <div class="admin-stats-grid">
+          <div class="stat-card">
+            <div class="stat-num" id="statTotal">0</div>
+            <div class="stat-label">Total Requests</div>
+          </div>
+          <div class="stat-card stat-received">
+            <div class="stat-num" id="statReceived">0</div>
+            <div class="stat-label">Received / In Review</div>
+          </div>
+          <div class="stat-card stat-progress">
+            <div class="stat-num" id="statProgress">0</div>
+            <div class="stat-label">In Processing</div>
+          </div>
+          <div class="stat-card stat-resolved">
+            <div class="stat-num" id="statResolved">0</div>
+            <div class="stat-label">Resolved / Issued</div>
+          </div>
+        </div>
+
+        <!-- Toolbar & Filtering -->
+        <div class="admin-toolbar">
+          <div class="admin-search-wrapper">
+            <input type="text" id="adminSearchInput" class="form-control" placeholder="Search by student name, 5-digit campus ID, ticket ID, branch...">
+          </div>
+          <div class="admin-filter-group">
+            <select id="adminStatusFilter" class="form-control select-control admin-select">
+              <option value="ALL">All Statuses</option>
+              <option value="received">Received</option>
+              <option value="progress">In Processing</option>
+              <option value="resolved">Resolved</option>
+            </select>
+            <select id="adminPartnerFilter" class="form-control select-control admin-select">
+              <option value="ALL">All Partners</option>
+              <option value="NXWave">NXWave</option>
+              <option value="IBM">IBM</option>
+              <option value="Kaviviam">Kaviviam</option>
+              <option value="Prasima">Prasima</option>
+              <option value="Not Applicable">Not Applicable</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Requests Data Table -->
+        <div class="admin-table-container">
+          <table class="admin-table" id="adminTable">
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Student</th>
+                <th>Branch & Year</th>
+                <th>Partner</th>
+                <th>Request Type</th>
+                <th>Contact</th>
+                <th>Submitted</th>
+                <th>Live Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <!-- Rendered dynamically via app.js -->
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   </div>
