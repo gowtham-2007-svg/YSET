@@ -7,6 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Storage key for student portal requests
   const STORAGE_KEY = 'yenepoya_student_requests_v1';
 
+  // Initialize Supabase Cloud Database Client
+  let supabase = null;
+  if (typeof window.supabase !== 'undefined' && typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
+    try {
+      supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+      console.log('Supabase Cloud Database connected: ', CONFIG.SUPABASE_URL);
+    } catch (err) {
+      console.warn('Supabase initialization error:', err);
+    }
+  }
+
   // Seed sample requests if empty for realistic demo experience
   seedSampleData();
 
@@ -344,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // LocalStorage Helper & Tracking Search
+  // LocalStorage & Supabase Helper & Tracking Search
   // --------------------------------------------------------------------------
   function getStoredRequests() {
     try {
@@ -358,8 +369,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveRequest(request) {
     const list = getStoredRequests();
-    list.unshift(request);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    // Avoid duplicates locally
+    if (!list.some(r => r.ticketId === request.ticketId)) {
+      list.unshift(request);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    // Save to Supabase Cloud Database
+    if (supabase) {
+      supabase.from('student_requests').insert([{
+        ticket_id: request.ticketId,
+        student_name: request.studentName,
+        campus_id: request.campusId,
+        branch: request.branch,
+        year: request.year,
+        partner: request.partner,
+        query: request.query,
+        email: request.email,
+        phone: request.phone,
+        status: request.status,
+        status_type: request.statusType
+      }]).then(({ data, error }) => {
+        if (error) {
+          console.warn('Supabase sync note (table setup):', error.message);
+        } else {
+          console.log('Saved to Supabase Cloud DB:', request.ticketId);
+        }
+      }).catch(err => console.warn('Supabase DB error:', err));
+    }
+  }
+
+  // Load from Supabase on start
+  if (supabase) {
+    supabase.from('student_requests')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data && data.length > 0) {
+          const formatted = data.map(d => ({
+            ticketId: d.ticket_id,
+            studentName: d.student_name,
+            campusId: d.campus_id,
+            branch: d.branch,
+            year: d.year,
+            partner: d.partner || 'Not Applicable',
+            query: d.query,
+            email: d.email,
+            phone: d.phone,
+            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
+            status: d.status || 'Received (In Review)',
+            statusType: d.status_type || 'received'
+          }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
+        }
+      }).catch(() => {});
+
+    // Supabase Real-time updates
+    try {
+      supabase.channel('public:student_requests')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'student_requests' }, () => {
+          if (modalAdminDashboard && modalAdminDashboard.classList.contains('active')) {
+            renderAdminDashboard();
+          }
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime subscription notice:', e);
+    }
   }
 
   function renderMyRequests() {
@@ -407,15 +483,42 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'status-received';
   }
 
-  function searchTicket(query) {
+  async function searchTicket(query) {
     const q = query.trim().toUpperCase();
     if (!q) {
       trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem;">Please enter a valid Ticket ID or Campus Registration Number.</div>`;
       return;
     }
 
-    const list = getStoredRequests();
-    const match = list.find(item => item.ticketId.toUpperCase() === q || item.campusId.toUpperCase() === q);
+    let list = getStoredRequests();
+    let match = list.find(item => item.ticketId.toUpperCase() === q || item.campusId.toUpperCase() === q);
+
+    // If not found in local cache, search Supabase
+    if (!match && supabase) {
+      try {
+        const { data } = await supabase.from('student_requests')
+          .select('*')
+          .or(`ticket_id.ilike.%${q}%,campus_id.ilike.%${q}%`)
+          .limit(1);
+        if (data && data.length > 0) {
+          const d = data[0];
+          match = {
+            ticketId: d.ticket_id,
+            studentName: d.student_name,
+            campusId: d.campus_id,
+            branch: d.branch,
+            year: d.year,
+            partner: d.partner || 'Not Applicable',
+            query: d.query,
+            email: d.email,
+            phone: d.phone,
+            date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
+            status: d.status || 'Received (In Review)',
+            statusType: d.status_type || 'received'
+          };
+        }
+      } catch (err) {}
+    }
 
     if (match) {
       trackingResult.innerHTML = `
@@ -635,6 +738,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     renderAdminDashboard();
+
+    // Update in Supabase Cloud DB
+    if (supabase) {
+      supabase.from('student_requests')
+        .update({ status: item.status, status_type: item.statusType })
+        .eq('ticket_id', ticketId)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase status update warning:', error.message);
+        });
+    }
+
     showToast(`Status for ${ticketId} updated to ${item.status}.`, 'success');
   };
 
@@ -646,6 +760,17 @@ document.addEventListener('DOMContentLoaded', () => {
     list = list.filter(r => r.ticketId !== ticketId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     renderAdminDashboard();
+
+    // Delete in Supabase Cloud DB
+    if (supabase) {
+      supabase.from('student_requests')
+        .delete()
+        .eq('ticket_id', ticketId)
+        .then(({ error }) => {
+          if (error) console.warn('Supabase delete warning:', error.message);
+        });
+    }
+
     showToast(`Request ${ticketId} removed.`, 'info');
   };
 
