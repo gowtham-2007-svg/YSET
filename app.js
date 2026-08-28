@@ -586,8 +586,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>
             <span class="partner-badge">${escapeHtml(partnerVal)}</span>
           </td>
-          <td style="max-width: 220px;">
-            <div style="font-weight: 600; color: #002244;">${escapeHtml(req.query)}</div>
+          <td>
+            <div class="table-request-highlight">${escapeHtml(req.query)}</div>
           </td>
           <td>
             <div style="font-size: 0.8rem; font-weight: 500;">${escapeHtml(req.email)}</div>

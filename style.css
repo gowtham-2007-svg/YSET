@@ -1285,6 +1285,21 @@ body {
   white-space: nowrap;
 }
 
+/* Prominent Request Type Highlight */
+.table-request-highlight {
+  display: inline-block;
+  background: #eef4ff;
+  color: #002b66;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid #bfdbfe;
+  box-shadow: 0 1px 3px rgba(0, 43, 102, 0.08);
+  line-height: 1.35;
+  letter-spacing: 0.2px;
+}
+
 /* Status Changer Dropdown inside table */
 .status-changer {
   height: 32px;
