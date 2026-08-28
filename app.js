@@ -147,8 +147,23 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navMyRequests) navMyRequests.addEventListener('click', () => { renderMyRequests(); openModal(modalMyRequests); });
   if (mobNavMyRequests) mobNavMyRequests.addEventListener('click', () => { renderMyRequests(); openModal(modalMyRequests); });
 
-  if (navTracking) navTracking.addEventListener('click', () => { openModal(modalTracking); });
-  if (mobNavTracking) mobNavTracking.addEventListener('click', () => { openModal(modalTracking); });
+  function handleOpenTracking() {
+    openModal(modalTracking);
+    if (trackInput && trackInput.value.trim()) {
+      searchTicket(trackInput.value.trim());
+    } else {
+      const list = getStoredRequests();
+      if (list.length > 0) {
+        const latest = list[0];
+        trackInput.value = latest.campusId || latest.ticketId || '';
+        searchTicket(trackInput.value);
+      }
+    }
+    setTimeout(() => { if (trackInput) trackInput.focus(); }, 150);
+  }
+
+  if (navTracking) navTracking.addEventListener('click', handleOpenTracking);
+  if (mobNavTracking) mobNavTracking.addEventListener('click', handleOpenTracking);
 
   if (navFeedback) navFeedback.addEventListener('click', () => { openModal(modalFeedback); });
   if (mobNavFeedback) mobNavFeedback.addEventListener('click', () => { openModal(modalFeedback); });
@@ -491,14 +506,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function searchTicket(query) {
-    const q = query.trim();
+    const q = (query || '').trim();
     if (!q) {
-      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem;">Please enter a valid Student ID or Ticket ID.</div>`;
+      const list = getStoredRequests();
+      if (list.length > 0) {
+        return searchTicket(list[0].campusId || list[0].ticketId);
+      }
+      trackingResult.innerHTML = `<div style="color: #e11d48; font-size: 0.88rem; padding: 12px 0;">Please enter your 5-digit Student ID or Request Number.</div>`;
       return;
     }
 
+    trackingResult.innerHTML = `
+      <div class="tracking-card" style="text-align: center; padding: 28px 20px; color: #64748b;">
+        <div style="font-weight: 600; color: #002244; margin-bottom: 4px;">Searching Request Records...</div>
+        <small style="color: #94a3b8;">Checking live database status for "${escapeHtml(q)}"</small>
+      </div>
+    `;
+
     let list = getStoredRequests();
-    let match = list.find(item => item.campusId === q || (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) || String(item.id) === q);
+    let match = list.find(item => 
+      item.campusId === q || 
+      (item.ticketId && item.ticketId.toUpperCase() === q.toUpperCase()) || 
+      String(item.id) === q ||
+      (item.studentName && item.studentName.toLowerCase().includes(q.toLowerCase()))
+    );
 
     // If not found in local cache, search Supabase document_requests
     if (!match && supabase) {
@@ -507,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isNaN(Number(q))) {
           queryBuilder = queryBuilder.or(`student_id.eq.${q},id.eq.${Number(q)}`);
         } else {
-          queryBuilder = queryBuilder.eq('student_id', q);
+          queryBuilder = queryBuilder.or(`student_id.ilike.%${q}%,student_name.ilike.%${q}%`);
         }
         const { data } = await queryBuilder.limit(1);
         if (data && data.length > 0) {
@@ -525,7 +556,9 @@ document.addEventListener('DOMContentLoaded', () => {
             status: d.status || 'Pending'
           };
         }
-      } catch (err) {}
+      } catch (err) {
+        console.warn('Supabase query search error:', err);
+      }
     }
 
     if (match) {
