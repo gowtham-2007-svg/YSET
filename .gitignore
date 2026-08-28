@@ -3,6 +3,9 @@
 .env.local
 .env.*.local
 
+# Local config with real API keys — DO NOT commit
+config.js
+
 # Operating System & IDE Files
 .DS_Store
 Thumbs.db
