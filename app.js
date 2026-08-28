@@ -288,7 +288,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Send to Formspree endpoint via AJAX
-    fetch('https://formspree.io/f/xzebbwrv', {
+    const endpoint = (typeof CONFIG !== 'undefined' && CONFIG.FORMSPREE_ENDPOINT) 
+      ? CONFIG.FORMSPREE_ENDPOINT 
+      : 'https://formspree.io/f/xzebbwrv';
+
+    fetch(endpoint, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
