@@ -364,11 +364,31 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // LocalStorage & Supabase document_requests Table Helper
+  // Storage Keys & Supabase document_requests Table Helper
   // --------------------------------------------------------------------------
-  function getStoredRequests() {
+  const MY_REQUESTS_KEY = 'yenepoya_my_personal_requests';
+  const ADMIN_CACHE_KEY = 'yenepoya_admin_cached_requests';
+
+  function getMyPersonalRequests() {
     try {
-      const data = localStorage.getItem(STORAGE_KEY);
+      const data = localStorage.getItem(MY_REQUESTS_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveMyPersonalRequest(request) {
+    const list = getMyPersonalRequests();
+    if (!list.some(r => r.ticketId === request.ticketId)) {
+      list.unshift(request);
+      localStorage.setItem(MY_REQUESTS_KEY, JSON.stringify(list));
+    }
+  }
+
+  function getStoredAdminRequests() {
+    try {
+      const data = localStorage.getItem(ADMIN_CACHE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (e) {
       return [];
@@ -397,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
             date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
             status: d.status || 'Pending'
           }));
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(formatted));
+          localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(formatted));
           return formatted;
         } else if (error) {
           console.warn('Supabase fetch notice:', error.message);
@@ -406,17 +426,21 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Supabase error:', err);
       }
     }
-    return getStoredRequests();
+    return getStoredAdminRequests();
   }
 
   async function saveRequest(request) {
-    const list = getStoredRequests();
-    if (!list.some(r => r.ticketId === request.ticketId)) {
-      list.unshift(request);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    // 1. Save strictly to this student's personal submissions
+    saveMyPersonalRequest(request);
+
+    // 2. Cache in admin list
+    const adminList = getStoredAdminRequests();
+    if (!adminList.some(r => r.ticketId === request.ticketId)) {
+      adminList.unshift(request);
+      localStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(adminList));
     }
 
-    // Insert into Supabase document_requests table
+    // 3. Insert into Supabase document_requests table
     if (supabase) {
       try {
         const { data, error } = await supabase.from('document_requests').insert([{
@@ -436,7 +460,15 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log('Saved to document_requests table ID:', data[0].id);
           request.id = data[0].id;
           request.ticketId = `DOC-${data[0].id}`;
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+
+          // Update personal requests with server ID
+          const myRequests = getMyPersonalRequests();
+          const match = myRequests.find(r => r.ticketId === request.ticketId || (r.campusId === request.campusId && r.query === request.query));
+          if (match) {
+            match.id = data[0].id;
+            match.ticketId = `DOC-${data[0].id}`;
+            localStorage.setItem(MY_REQUESTS_KEY, JSON.stringify(myRequests));
+          }
         }
       } catch (err) {
         console.error('Supabase insert exception:', err);
@@ -463,11 +495,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderMyRequests() {
+  async function renderMyRequests() {
     const container = document.getElementById('myRequestsList');
     if (!container) return;
 
-    const list = getStoredRequests();
+    let list = getMyPersonalRequests();
+
+    // If Supabase is available, sync live status for personal submissions
+    if (supabase && list.length > 0) {
+      try {
+        const studentIds = [...new Set(list.map(r => r.campusId).filter(Boolean))];
+        if (studentIds.length > 0) {
+          const { data } = await supabase.from('document_requests').select('*').in('student_id', studentIds);
+          if (data && data.length > 0) {
+            list = list.map(item => {
+              const remote = data.find(d => String(d.id) === String(item.id) || (d.student_id === item.campusId && d.document_type === item.query));
+              if (remote) {
+                item.status = remote.status || item.status;
+                if (remote.id) item.id = remote.id;
+              }
+              return item;
+            });
+            localStorage.setItem(MY_REQUESTS_KEY, JSON.stringify(list));
+          }
+        }
+      } catch (e) {}
+    }
+
     if (list.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
@@ -479,7 +533,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <line x1="9" y1="16" x2="13" y2="16"></line>
             </svg>
           </div>
-          <p>No requests found. Submit a request using the main portal form.</p>
+          <p>You haven't submitted any requests yet.</p>
+          <small style="color: #94a3b8; margin-top: 4px; display: block;">Fill out the main portal form to submit and track your document requests here.</small>
         </div>
       `;
       return;
@@ -487,23 +542,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.innerHTML = list.map(item => {
       const statusLower = (item.status || 'Pending').toLowerCase();
+      const trackId = item.campusId || item.ticketId || item.id;
       return `
-        <div class="req-item-card">
+        <div class="req-item-card" style="cursor: pointer;" onclick="window.trackPersonalRequest('${escapeHtml(trackId)}')">
           <div style="flex: 1;">
             <div class="req-meta-top">
               <span class="req-ticket-tag">${escapeHtml(item.ticketId || ('DOC-' + (item.id || '')))}</span>
               <span class="req-date-tag">• ${escapeHtml(item.date)}</span>
             </div>
             <div class="req-query-title">${escapeHtml(item.query)}</div>
-            <div class="req-branch-info">${escapeHtml(item.studentName)} | ${escapeHtml(item.branch)}</div>
+            <div class="req-branch-info">${escapeHtml(item.studentName)} (${escapeHtml(item.campusId)}) | ${escapeHtml(item.branch)}</div>
           </div>
-          <div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
             <span class="status-badge status-${statusLower}">${escapeHtml(item.status || 'Pending')}</span>
+            <span style="font-size: 0.76rem; font-weight: 700; color: #002b66;">Track Timeline &rarr;</span>
           </div>
         </div>
       `;
     }).join('');
   }
+
+  window.trackPersonalRequest = function(ticketId) {
+    closeModal(modalMyRequests);
+    openModal(modalTracking);
+    if (trackInput) trackInput.value = ticketId;
+    searchTicket(ticketId);
+  };
 
   async function searchTicket(query) {
     const q = (query || '').trim();
@@ -954,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // CSV Export utility
   if (btnExportCSV) {
     btnExportCSV.addEventListener('click', () => {
-      const list = getStoredRequests();
+      const list = getStoredAdminRequests();
       if (list.length === 0) {
         showToast('No requests available to export.', 'info');
         return;
@@ -983,41 +1047,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.removeChild(link);
       showToast('Student requests exported to CSV.', 'success');
     });
-  }
-
-  // --------------------------------------------------------------------------
-  // Seed initial sample data for demonstration if clean
-  // --------------------------------------------------------------------------
-  function seedSampleData() {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      const initialRequests = [
-        {
-          id: 101,
-          ticketId: 'DOC-101',
-          studentName: 'Mohammed Rayan',
-          campusId: '22084',
-          branch: 'Computer Science & Engineering (3rd Year)',
-          partner: 'NXWave',
-          query: 'Bonafide Certificate',
-          email: 'm.rayan@yenepoya.edu.in',
-          date: 'Aug 24, 2026, 11:30 AM',
-          status: 'Completed'
-        },
-        {
-          id: 102,
-          ticketId: 'DOC-102',
-          studentName: 'Aisha K.',
-          campusId: '34521',
-          branch: 'Information Technology (2nd Year)',
-          partner: 'IBM',
-          query: 'Transcript / Academic Record',
-          email: 'aisha.k@yenepoya.edu.in',
-          date: 'Aug 27, 2026, 03:15 PM',
-          status: 'Pending'
-        }
-      ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialRequests));
-    }
   }
 
   // --------------------------------------------------------------------------
