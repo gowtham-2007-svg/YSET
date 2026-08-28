@@ -227,11 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
         queryText = `Other: ${customQueryDetail.value.trim()}`;
       }
 
+      const selectedPartnerEl = form.querySelector('input[name="industryPartner"]:checked');
+      const selectedPartner = selectedPartnerEl ? selectedPartnerEl.value : 'Not Applicable';
+
       const newRequest = {
         ticketId: ticketId,
         studentName: studentNameInput.value.trim(),
         campusId: campusIdInput.value.trim(),
         branch: studentBranchInput.value,
+        partner: selectedPartner,
         query: queryText,
         email: emailIdInput.value.trim(),
         year: whichYearInput.value,
@@ -249,6 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
       successDetailsBox.innerHTML = `
         <div><strong>Student:</strong> <span>${escapeHtml(newRequest.studentName)} (${escapeHtml(newRequest.campusId)})</span></div>
         <div><strong>Branch / Year:</strong> <span>${escapeHtml(newRequest.branch)} - ${escapeHtml(newRequest.year)}</span></div>
+        <div><strong>Program Partner:</strong> <span>${escapeHtml(newRequest.partner)}</span></div>
         <div><strong>Request:</strong> <span>${escapeHtml(newRequest.query)}</span></div>
         <div><strong>Status:</strong> <span style="color: #0284c7; font-weight: 600;">Received (Under Processing)</span></div>
       `;

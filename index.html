@@ -448,8 +448,40 @@
             <div class="error-msg" id="phoneNumberError">Please enter a valid 10-digit phone number</div>
           </div>
 
-          <!-- Column 2: Row 4 (Empty slot to keep grid aligned) -->
-          <div class="form-group empty-slot" aria-hidden="true"></div>
+          <!-- Column 2: Row 4 -->
+          <div class="form-group" id="partnerGroup">
+            <label class="form-label">
+              PROGRAM / INDUSTRY PARTNER <span class="required-star">*</span>
+            </label>
+            <div class="radio-options-grid">
+              <label class="radio-option-item">
+                <input type="radio" name="industryPartner" value="NXWave" required>
+                <span class="custom-radio-dot"></span>
+                <span class="radio-text">NXWave</span>
+              </label>
+              <label class="radio-option-item">
+                <input type="radio" name="industryPartner" value="IBM">
+                <span class="custom-radio-dot"></span>
+                <span class="radio-text">IBM</span>
+              </label>
+              <label class="radio-option-item">
+                <input type="radio" name="industryPartner" value="Kaviviam">
+                <span class="custom-radio-dot"></span>
+                <span class="radio-text">Kaviviam</span>
+              </label>
+              <label class="radio-option-item">
+                <input type="radio" name="industryPartner" value="Prasima">
+                <span class="custom-radio-dot"></span>
+                <span class="radio-text">Prasima</span>
+              </label>
+              <label class="radio-option-item">
+                <input type="radio" name="industryPartner" value="Not Applicable" checked>
+                <span class="custom-radio-dot"></span>
+                <span class="radio-text">Not Applicable</span>
+              </label>
+            </div>
+            <div class="error-msg" id="partnerError">Please select a program partner</div>
+          </div>
 
         </div>
 
