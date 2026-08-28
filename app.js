@@ -148,16 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleOpenTracking() {
     openModal(modalTracking);
-    if (trackInput && trackInput.value.trim()) {
-      searchTicket(trackInput.value.trim());
-    } else {
-      const list = getStoredRequests();
-      if (list.length > 0) {
-        const latest = list[0];
-        trackInput.value = latest.campusId || latest.ticketId || '';
-        searchTicket(trackInput.value);
-      }
-    }
+    setTrackingDirectMode(false);  // Always show search bar when opened from nav
     setTimeout(() => { if (trackInput) trackInput.focus(); }, 150);
   }
 
@@ -281,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedPartnerEl = form.querySelector('input[name="industryPartner"]:checked');
     const selectedPartner = selectedPartnerEl ? selectedPartnerEl.value : 'Not Applicable';
 
+    const nowISO = new Date().toISOString();
     const newRequest = {
       ticketId: ticketId,
       studentName: studentNameInput.value.trim(),
@@ -291,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       email: emailIdInput.value.trim(),
       year: whichYearInput.value,
       phone: phoneNumberInput.value.trim(),
+      rawDate: nowISO,
       date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
       status: 'Pending'
     };
@@ -343,11 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><strong>Status:</strong> <span style="color: #d97706; font-weight: 700;">Pending Review</span></div>
       `;
 
-      // Track now button setup
+      // Track now button — go directly to timeline (no search bar)
       btnTrackNow.onclick = () => {
         closeModal(modalSuccess);
         openModal(modalTracking);
-        trackInput.value = newRequest.campusId;
+        setTrackingDirectMode(true);
+        if (trackInput) trackInput.value = newRequest.campusId;
         searchTicket(newRequest.campusId);
       };
 
@@ -413,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             query: d.document_type || '',
             purpose: d.purpose || '',
             email: d.email || '',
+            rawDate: d.created_at || null,
             date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
             status: d.status || 'Pending'
           }));
@@ -561,9 +556,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
+  // --- Tracking modal mode helpers ---
+  const trackSearchSection = document.getElementById('trackSearchSection');
+  const trackBackLink = document.getElementById('trackBackLink');
+  const btnBackToSearch = document.getElementById('btnBackToSearch');
+
+  function setTrackingDirectMode(on) {
+    if (!trackSearchSection || !trackBackLink) return;
+    if (on) {
+      trackSearchSection.style.display = 'none';
+      trackBackLink.style.display = 'block';
+    } else {
+      trackSearchSection.style.display = '';
+      trackBackLink.style.display = 'none';
+      if (trackingResult) trackingResult.innerHTML = '';
+      if (trackInput) { trackInput.value = ''; trackInput.focus(); }
+    }
+  }
+
+  if (btnBackToSearch) {
+    btnBackToSearch.addEventListener('click', () => setTrackingDirectMode(false));
+  }
+
   window.trackPersonalRequest = function(ticketId) {
     closeModal(modalMyRequests);
     openModal(modalTracking);
+    setTrackingDirectMode(true);
     if (trackInput) trackInput.value = ticketId;
     searchTicket(ticketId);
   };
@@ -572,33 +590,79 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusRaw = match.status || 'Pending';
       const statusLower = statusRaw.toLowerCase();
 
-      // Step mapping: 1: Request Submitted, 2: Accepted, 3: Processing, 4: Ready, 5: Hand Over
-      let currentStep = 1;
-      let handoverTimeText = "Tomorrow at 11:00 AM";
-      let handoverSub = "Location: Administrative Office, Counter 3 (Student Section)";
+      // --- Helper: parse submission date ---
+      let submittedAt = null;
+      if (match.rawDate) {
+        submittedAt = new Date(match.rawDate);
+      } else if (match.date) {
+        submittedAt = new Date(match.date);
+      }
+      const isValidDate = submittedAt && !isNaN(submittedAt.getTime());
+      const hoursElapsed = isValidDate ? (Date.now() - submittedAt.getTime()) / 3_600_000 : 0;
 
-      if (statusLower === 'pending') {
-        currentStep = 1;
-        handoverTimeText = "Tomorrow at 11:00 AM";
-      } else if (statusLower === 'accepted' || statusLower === 'approved') {
-        currentStep = 2;
-        handoverTimeText = "Tomorrow at 11:00 AM";
-      } else if (statusLower === 'processing' || statusLower === 'in processing') {
-        currentStep = 3;
-        handoverTimeText = "Today by 4:00 PM";
-      } else if (statusLower === 'ready' || statusLower === 'ready for pickup') {
-        currentStep = 4;
-        handoverTimeText = "Ready for Collection Now";
-        handoverSub = "Available immediately at Administrative Office, Counter 3";
+      // --- Helper: compute a formatted future time string ---
+      function futureTimeLabel(fromDate, addHours) {
+        if (!fromDate || isNaN(fromDate.getTime())) return 'Tomorrow at 11:00 AM';
+        const target = new Date(fromDate.getTime() + addHours * 3_600_000);
+        const now = new Date();
+        const isToday = target.toDateString() === now.toDateString();
+        const isTomorrow = target.toDateString() === new Date(now.getTime() + 86_400_000).toDateString();
+        const timeStr = target.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        if (isToday) return `Today at ${timeStr}`;
+        if (isTomorrow) return `Tomorrow at ${timeStr}`;
+        return target.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ` at ${timeStr}`;
+      }
+
+      // --- Step mapping ---
+      // Admin-set status takes priority; if still "Pending", use time-based auto-advance.
+      // Steps: 1=Submitted, 2=Accepted(3h), 3=Processing(6h), 4=Ready(12h), 5=HandOver(24h)
+      let currentStep = 1;
+      let handoverTimeText = futureTimeLabel(submittedAt, 24);
+      let handoverSub = 'Location: Administrative Office, Counter 3 (Student Section)';
+
+      if (statusLower === 'rejected') {
+        currentStep = 0;
+        handoverTimeText = 'Request Not Approved';
+        handoverSub = 'Please visit Administrative Office for clarification';
       } else if (statusLower === 'completed' || statusLower === 'hand over' || statusLower === 'handed over') {
         currentStep = 5;
-        handoverTimeText = "Handed Over & Completed";
-        handoverSub = "Document successfully issued to student";
-      } else if (statusLower === 'rejected') {
-        currentStep = 0;
-        handoverTimeText = "Request Not Approved";
-        handoverSub = "Please visit Administrative Office for clarification";
+        handoverTimeText = 'Handed Over & Completed';
+        handoverSub = 'Document successfully issued to student';
+      } else if (statusLower === 'ready' || statusLower === 'ready for pickup') {
+        currentStep = 4;
+        handoverTimeText = 'Ready for Collection Now';
+        handoverSub = 'Available immediately at Administrative Office, Counter 3';
+      } else if (statusLower === 'processing' || statusLower === 'in processing') {
+        currentStep = 3;
+        handoverTimeText = futureTimeLabel(submittedAt, 24);
+      } else if (statusLower === 'accepted' || statusLower === 'approved') {
+        currentStep = 2;
+        handoverTimeText = futureTimeLabel(submittedAt, 24);
+      } else {
+        // Auto time-based progression for "Pending" or unknown status
+        if (hoursElapsed >= 24) {
+          currentStep = 5;
+          handoverTimeText = 'Handed Over & Completed';
+          handoverSub = 'Document successfully issued to student';
+        } else if (hoursElapsed >= 12) {
+          currentStep = 4;
+          handoverTimeText = 'Ready for Collection Now';
+          handoverSub = 'Available immediately at Administrative Office, Counter 3';
+        } else if (hoursElapsed >= 6) {
+          currentStep = 3;
+          handoverTimeText = futureTimeLabel(submittedAt, 24);
+        } else if (hoursElapsed >= 3) {
+          currentStep = 2;
+          handoverTimeText = futureTimeLabel(submittedAt, 24);
+        } else {
+          currentStep = 1;
+          handoverTimeText = futureTimeLabel(submittedAt, 24);
+        }
       }
+
+      // Clamp: never exceed step 5
+      currentStep = Math.min(Math.max(currentStep, 0), 5);
+
 
       // Render comprehensive tracking card with visual timeline
       trackingResult.innerHTML = `
@@ -798,6 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             partner: d.industry_partner || 'Not Applicable',
             query: d.document_type,
             email: d.email,
+            rawDate: d.created_at || null,
             date: d.created_at ? new Date(d.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent',
             status: d.status || 'Pending'
           };

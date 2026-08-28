@@ -535,10 +535,19 @@
         <button type="button" class="modal-close" data-close="modalTracking">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-description">Enter your 5-digit Student ID or Request Number to inspect the live status and handover timeline of your document.</p>
-        <div class="tracking-search-bar">
-          <input type="text" id="trackInput" class="form-control" placeholder="e.g. 43637 or REQ-101">
-          <button type="button" class="btn-track" id="trackSubmitBtn">Track Status</button>
+        <div id="trackSearchSection">
+          <p class="modal-description">Enter your 5-digit Student ID or Request Number to inspect the live status and handover timeline of your document.</p>
+          <div class="tracking-search-bar">
+            <input type="text" id="trackInput" class="form-control" placeholder="e.g. 43637 or REQ-101">
+            <button type="button" class="btn-track" id="trackSubmitBtn">Track Status</button>
+          </div>
+        </div>
+        <!-- Back link (only visible in direct-mode) -->
+        <div id="trackBackLink" style="display:none; margin-bottom: 12px;">
+          <button type="button" id="btnBackToSearch" style="background:none;border:none;cursor:pointer;color:#0052cc;font-size:0.84rem;font-weight:600;padding:0;display:flex;align-items:center;gap:5px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Search by ID
+          </button>
         </div>
         <div id="trackingResult" class="tracking-result-area"></div>
       </div>

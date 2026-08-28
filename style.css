@@ -1617,25 +1617,262 @@ body {
   }
 }
 
-@media (max-width: 480px) {
+/* ==========================================================================
+   Mobile Full-Screen Nav Drawer (≤ 600px)
+   ========================================================================== */
+@media (max-width: 600px) {
+
+  /* Navbar tighter on phones */
+  .nav-container {
+    padding: 10px 16px;
+  }
+
+  .brand-logo-wrapper {
+    width: 40px;
+    height: 34px;
+  }
+
   .brand-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
   }
-  
+
   .brand-subtitle {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
   }
 
-  .portal-main-title {
-    font-size: 1.4rem;
+  .brand-portal {
+    font-size: 0.75rem;
   }
 
+  /* Mobile drawer — full width, slides from top */
+  .mobile-nav {
+    padding: 8px 12px 16px;
+    gap: 6px;
+    /* Make it properly full-width */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-nav-item {
+    width: 100%;
+    padding: 13px 18px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 10px;
+    gap: 14px;
+    /* Prevent text from being cut off */
+    white-space: normal;
+    text-align: left;
+  }
+
+  .mobile-nav-item .nav-icon-circle {
+    min-width: 32px;
+    min-height: 32px;
+    flex-shrink: 0;
+  }
+
+  /* ==========================================================================
+     Modal — Full screen bottom-sheet on phones
+     ========================================================================== */
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal-dialog {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+    max-height: 92vh;
+    /* Slide up animation */
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .modal-backdrop.active .modal-dialog {
+    transform: translateY(0);
+  }
+
+  /* Pull handle indicator */
+  .modal-dialog::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 2px;
+    margin: 10px auto -4px;
+    flex-shrink: 0;
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: 100%;
+  }
+
+  .modal-dialog.modal-tracking-dialog {
+    max-width: 100%;
+  }
+
+  .modal-header {
+    padding: 14px 18px;
+  }
+
+  .modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .modal-body {
+    padding: 16px 18px 24px;
+  }
+
+  /* ==========================================================================
+     My Requests Card — Fix mobile layout
+     ========================================================================== */
+  .req-item-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 14px 14px !important;
+  }
+
+  /* Row with status badge + Track button side by side at the bottom */
+  .req-item-card > div:last-child {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  /* Ticket tag + date on same line */
+  .req-meta-top {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .req-ticket-tag {
+    font-size: 0.72rem !important;
+    padding: 3px 8px !important;
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .req-date-tag {
+    font-size: 0.72rem !important;
+    white-space: nowrap;
+  }
+
+  /* Document type title */
+  .req-query-title {
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Student info line */
+  .req-branch-info {
+    font-size: 0.76rem !important;
+    color: #64748b;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  /* Status badge on mobile */
+  .status-badge {
+    font-size: 0.7rem !important;
+    padding: 3px 10px !important;
+    white-space: nowrap;
+  }
+
+  /* ==========================================================================
+     Tracking Timeline — Stack vertically on phones
+     ========================================================================== */
+  .timeline-stepper {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
+  }
+
+  .timeline-step {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    width: 100% !important;
+    min-height: 54px;
+  }
+
+  .timeline-line {
+    width: 2px !important;
+    height: 30px !important;
+    margin: 0 0 0 15px !important;
+    flex-shrink: 0;
+    align-self: unset;
+  }
+
+  .step-text {
+    text-align: left !important;
+  }
+
+  .step-name {
+    font-size: 0.85rem !important;
+  }
+
+  .step-sub {
+    font-size: 0.73rem !important;
+  }
+
+  /* Tracking card info rows */
+  .tracking-card-info-row {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  .tracking-handover-box {
+    padding: 12px 14px !important;
+  }
+
+  .handover-time {
+    font-size: 1rem !important;
+  }
+
+  /* Tracking search bar */
+  .tracking-search-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-track {
+    width: 100%;
+    height: 46px;
+  }
+
+  /* Form card on very small screens */
   .form-card {
     padding: 24px 16px 20px;
     border-radius: 12px;
   }
 
-  .modal-dialog {
-    margin: 10px;
+  .portal-main-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-title {
+    font-size: 0.9rem;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .brand-logo-wrapper {
+    width: 34px;
+    height: 30px;
   }
 }
