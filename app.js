@@ -273,7 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Formspree payload
     const formspreePayload = {
-      _subject: `New Request from ${newRequest.studentName} [${newRequest.ticketId}]`,
+      _subject: `[Yenepoya Portal] New Request: ${newRequest.studentName} (${newRequest.campusId}) - ${newRequest.ticketId}`,
+      _replyto: newRequest.email,
       ticket_id: newRequest.ticketId,
       student_name: newRequest.studentName,
       campus_id: newRequest.campusId,
