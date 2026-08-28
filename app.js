@@ -600,24 +600,47 @@ document.addEventListener('DOMContentLoaded', () => {
       const isValidDate = submittedAt && !isNaN(submittedAt.getTime());
       const hoursElapsed = isValidDate ? (Date.now() - submittedAt.getTime()) / 3_600_000 : 0;
 
-      // --- Helper: compute a formatted future time string ---
-      function futureTimeLabel(fromDate, addHours) {
-        if (!fromDate || isNaN(fromDate.getTime())) return 'Tomorrow at 11:00 AM';
-        const target = new Date(fromDate.getTime() + addHours * 3_600_000);
+      // --- Helper: pick a fixed office handover slot ---
+      // Only ever returns one of: 11:00 AM, 12:55 PM, or 4:00 PM
+      function fixedHandoverSlot(fromDate) {
+        const slots = ['11:00 AM', '12:55 PM', '4:00 PM'];
+        // Choose slot based on submission hour:
+        // Submitted 00:00–09:59 → 11:00 AM
+        // Submitted 10:00–13:59 → 12:55 PM
+        // Submitted 14:00–23:59 → 4:00 PM
+        let slotTime;
+        if (!fromDate || isNaN(fromDate.getTime())) {
+          slotTime = slots[0];
+        } else {
+          const h = fromDate.getHours();
+          if (h < 10) slotTime = slots[0];
+          else if (h < 14) slotTime = slots[1];
+          else slotTime = slots[2];
+        }
+
+        // Determine label: today / tomorrow / date
         const now = new Date();
-        const isToday = target.toDateString() === now.toDateString();
-        const isTomorrow = target.toDateString() === new Date(now.getTime() + 86_400_000).toDateString();
-        const timeStr = target.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        if (isToday) return `Today at ${timeStr}`;
-        if (isTomorrow) return `Tomorrow at ${timeStr}`;
-        return target.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) + ` at ${timeStr}`;
+        const handoverDay = fromDate && !isNaN(fromDate.getTime())
+          ? new Date(fromDate.getTime() + 86_400_000)   // next calendar day from submission
+          : new Date(now.getTime() + 86_400_000);
+        handoverDay.setHours(0, 0, 0, 0);
+
+        const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
+        const tomorrowStart = new Date(todayStart.getTime() + 86_400_000);
+
+        let dayLabel;
+        if (handoverDay.getTime() === todayStart.getTime()) dayLabel = 'Today';
+        else if (handoverDay.getTime() === tomorrowStart.getTime()) dayLabel = 'Tomorrow';
+        else dayLabel = handoverDay.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+        return `${dayLabel} at ${slotTime}`;
       }
 
       // --- Step mapping ---
       // Admin-set status takes priority; if still "Pending", use time-based auto-advance.
       // Steps: 1=Submitted, 2=Accepted(3h), 3=Processing(6h), 4=Ready(12h), 5=HandOver(24h)
       let currentStep = 1;
-      let handoverTimeText = futureTimeLabel(submittedAt, 24);
+      let handoverTimeText = fixedHandoverSlot(submittedAt);
       let handoverSub = 'Location: Administrative Office, Counter 3 (Student Section)';
 
       if (statusLower === 'rejected') {
@@ -634,10 +657,10 @@ document.addEventListener('DOMContentLoaded', () => {
         handoverSub = 'Available immediately at Administrative Office, Counter 3';
       } else if (statusLower === 'processing' || statusLower === 'in processing') {
         currentStep = 3;
-        handoverTimeText = futureTimeLabel(submittedAt, 24);
+        handoverTimeText = fixedHandoverSlot(submittedAt);
       } else if (statusLower === 'accepted' || statusLower === 'approved') {
         currentStep = 2;
-        handoverTimeText = futureTimeLabel(submittedAt, 24);
+        handoverTimeText = fixedHandoverSlot(submittedAt);
       } else {
         // Auto time-based progression for "Pending" or unknown status
         if (hoursElapsed >= 24) {
@@ -650,18 +673,19 @@ document.addEventListener('DOMContentLoaded', () => {
           handoverSub = 'Available immediately at Administrative Office, Counter 3';
         } else if (hoursElapsed >= 6) {
           currentStep = 3;
-          handoverTimeText = futureTimeLabel(submittedAt, 24);
+          handoverTimeText = fixedHandoverSlot(submittedAt);
         } else if (hoursElapsed >= 3) {
           currentStep = 2;
-          handoverTimeText = futureTimeLabel(submittedAt, 24);
+          handoverTimeText = fixedHandoverSlot(submittedAt);
         } else {
           currentStep = 1;
-          handoverTimeText = futureTimeLabel(submittedAt, 24);
+          handoverTimeText = fixedHandoverSlot(submittedAt);
         }
       }
 
       // Clamp: never exceed step 5
       currentStep = Math.min(Math.max(currentStep, 0), 5);
+
 
 
       // Render comprehensive tracking card with visual timeline
