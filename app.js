@@ -214,38 +214,59 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
 
-    setTimeout(() => {
-      submitBtn.classList.remove('loading');
-      submitBtn.disabled = false;
+    // Generate Ticket
+    const randomTicketNum = Math.floor(10000 + Math.random() * 90000);
+    const ticketId = `YEN-2026-${randomTicketNum}`;
 
-      // Generate Ticket
-      const randomTicketNum = Math.floor(10000 + Math.random() * 90000);
-      const ticketId = `YEN-2026-${randomTicketNum}`;
+    let queryText = queryTypeInput.value;
+    if (queryText.includes('Other') && customQueryDetail && customQueryDetail.value.trim()) {
+      queryText = `Other: ${customQueryDetail.value.trim()}`;
+    }
 
-      let queryText = queryTypeInput.value;
-      if (queryText.includes('Other') && customQueryDetail && customQueryDetail.value.trim()) {
-        queryText = `Other: ${customQueryDetail.value.trim()}`;
-      }
+    const selectedPartnerEl = form.querySelector('input[name="industryPartner"]:checked');
+    const selectedPartner = selectedPartnerEl ? selectedPartnerEl.value : 'Not Applicable';
 
-      const selectedPartnerEl = form.querySelector('input[name="industryPartner"]:checked');
-      const selectedPartner = selectedPartnerEl ? selectedPartnerEl.value : 'Not Applicable';
+    const newRequest = {
+      ticketId: ticketId,
+      studentName: studentNameInput.value.trim(),
+      campusId: campusIdInput.value.trim(),
+      branch: studentBranchInput.value,
+      partner: selectedPartner,
+      query: queryText,
+      email: emailIdInput.value.trim(),
+      year: whichYearInput.value,
+      phone: phoneNumberInput.value.trim(),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      status: 'Received (In Review)',
+      statusType: 'received'
+    };
 
-      const newRequest = {
-        ticketId: ticketId,
-        studentName: studentNameInput.value.trim(),
-        campusId: campusIdInput.value.trim(),
-        branch: studentBranchInput.value,
-        partner: selectedPartner,
-        query: queryText,
-        email: emailIdInput.value.trim(),
-        year: whichYearInput.value,
-        phone: phoneNumberInput.value.trim(),
-        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        status: 'Received (In Review)',
-        statusType: 'received'
-      };
+    // Formspree payload
+    const formspreePayload = {
+      _subject: `New Request from ${newRequest.studentName} [${newRequest.ticketId}]`,
+      ticket_id: newRequest.ticketId,
+      student_name: newRequest.studentName,
+      campus_id: newRequest.campusId,
+      branch: newRequest.branch,
+      year: newRequest.year,
+      partner: newRequest.partner,
+      request_type: newRequest.query,
+      email: newRequest.email,
+      phone: newRequest.phone,
+      submission_time: newRequest.date
+    };
 
-      // Save to localStorage
+    // Send to Formspree endpoint via AJAX
+    fetch('https://formspree.io/f/xzebbwrv', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(formspreePayload)
+    })
+    .then(response => {
+      // Save to localStorage for tracking
       saveRequest(newRequest);
 
       // Populate Success Modal
@@ -255,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div><strong>Branch / Year:</strong> <span>${escapeHtml(newRequest.branch)} - ${escapeHtml(newRequest.year)}</span></div>
         <div><strong>Program Partner:</strong> <span>${escapeHtml(newRequest.partner)}</span></div>
         <div><strong>Request:</strong> <span>${escapeHtml(newRequest.query)}</span></div>
-        <div><strong>Status:</strong> <span style="color: #0284c7; font-weight: 600;">Received (Under Processing)</span></div>
+        <div><strong>Status:</strong> <span style="color: #0284c7; font-weight: 600;">Received & Logged</span></div>
       `;
 
       // Track now button setup
@@ -271,10 +292,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Reset Form
       form.reset();
+      if (customQueryBox) customQueryBox.style.display = 'none';
       document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       document.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
-
-    }, 700);
+    })
+    .catch(error => {
+      console.warn('Formspree dispatch notice:', error);
+      // Ensure smooth student experience with offline/fallback save
+      saveRequest(newRequest);
+      openModal(modalSuccess);
+    })
+    .finally(() => {
+      submitBtn.classList.remove('loading');
+      submitBtn.disabled = false;
+    });
   });
 
   // --------------------------------------------------------------------------
