@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yenepoya (Deemed to be University) - Student Portal</title>
+  <meta name="description" content="Official Student Portal of Yenepoya (Deemed to be University) for student service requests, tracking, and support.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-link" id="brandHomeLink">
+        <div class="brand-logo-wrapper">
+          <!-- Yenepoya Crest Emblem SVG -->
+          <svg class="crest-icon" viewBox="0 0 120 102" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="nav-shield-top">
+                <polygon points="28,8 92,8 92,25 60,45 28,25"/>
+              </clipPath>
+              <clipPath id="nav-shield-left">
+                <path d="M28 25 L60 45 V81 C48 78 28 65 28 42 Z"/>
+              </clipPath>
+              <clipPath id="nav-shield-right">
+                <path d="M92 25 L60 45 V81 C72 78 92 65 92 42 Z"/>
+              </clipPath>
+              <path id="navBannerCurve" d="M25 80 Q60 93 95 80"/>
+            </defs>
+
+            <!-- Top Lime Green Segment -->
+            <g clip-path="url(#nav-shield-top)">
+              <rect x="25" y="5" width="70" height="42" fill="#9EC73D"/>
+              <line x1="32" y1="26" x2="62" y2="7" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="42" y1="28" x2="74" y2="7" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="52" y1="30" x2="86" y2="7" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="62" y1="33" x2="94" y2="12" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="72" y1="35" x2="94" y2="21" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="82" y1="37" x2="94" y2="29" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Bottom-Left Sky Cyan Segment -->
+            <g clip-path="url(#nav-shield-left)">
+              <rect x="25" y="24" width="37" height="60" fill="#38B7E8"/>
+              <line x1="26" y1="30" x2="62" y2="48" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="26" y1="39" x2="62" y2="57" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="26" y1="48" x2="62" y2="66" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="26" y1="57" x2="62" y2="75" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="30" y1="65" x2="56" y2="78" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Right Grey Segment -->
+            <g clip-path="url(#nav-shield-right)">
+              <rect x="58" y="24" width="37" height="60" fill="#8F9297"/>
+              <line x1="67" y1="46" x2="67" y2="78" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="74" y1="42" x2="74" y2="74" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="81" y1="37" x2="81" y2="69" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+              <line x1="88" y1="32" x2="88" y2="61" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Dividing Borders -->
+            <path d="M28 8 H92 V42 C92 65 72 78 60 81 C48 78 28 65 28 42 Z" stroke="#ffffff" stroke-width="2" fill="none"/>
+            <path d="M28 25 L60 45 L92 25" stroke="#ffffff" stroke-width="2" fill="none"/>
+            <line x1="60" y1="45" x2="60" y2="81" stroke="#ffffff" stroke-width="2"/>
+
+            <!-- Banner Ribbon Tails and Folds -->
+            <polygon points="12,69 26,67 26,79 12,82 18,75.5" fill="#9CA3AF" stroke="#6B7280" stroke-width="0.8"/>
+            <polygon points="108,69 94,67 94,79 108,82 102,75.5" fill="#9CA3AF" stroke="#6B7280" stroke-width="0.8"/>
+            <polygon points="26,67 33,75 26,79" fill="#111827"/>
+            <polygon points="94,67 87,75 94,79" fill="#111827"/>
+
+            <!-- Main Curved Banner -->
+            <path d="M22 71 Q60 86 98 71 L98 82 Q60 97 22 82 Z" fill="#C4CBD5" stroke="#4B5563" stroke-width="1"/>
+            <text font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="5.6" font-weight="800" fill="#1E293B" letter-spacing="0.8">
+              <textPath href="#navBannerCurve" startOffset="50%" text-anchor="middle">
+                RABBI ZIDNI 'ILMA
+              </textPath>
+            </text>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">YENEPOYA</div>
+          <div class="brand-subtitle">(Deemed to be University)</div>
+          <div class="brand-portal">Student Portal</div>
+        </div>
+      </a>
+
+      <!-- Right Navigation Icons -->
+      <nav class="nav-links">
+        <button type="button" class="nav-item" id="navMyRequests">
+          <div class="nav-icon-circle">
+            <!-- Clipboard Icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              <line x1="9" y1="12" x2="15" y2="12"></line>
+              <line x1="9" y1="16" x2="13" y2="16"></line>
+            </svg>
+          </div>
+          <span>My Requests</span>
+        </button>
+
+        <button type="button" class="nav-item" id="navTracking">
+          <div class="nav-icon-circle">
+            <!-- Network/Tracking Tree Icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+          </div>
+          <span>Request Tracking</span>
+        </button>
+
+        <button type="button" class="nav-item" id="navFeedback">
+          <div class="nav-icon-circle">
+            <!-- Feedback Chat / Star Icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              <polygon points="12 7 13.2 10.5 16.8 10.5 13.9 12.6 15 16.1 12 13.9 9 16.1 10.1 12.6 7.2 10.5 10.8 10.5 12 7" fill="currentColor" stroke="none"></polygon>
+            </svg>
+          </div>
+          <span>Feedback</span>
+        </button>
+
+        <button type="button" class="nav-item" id="navTerms">
+          <div class="nav-icon-circle">
+            <!-- Document / Terms Icon -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <span>Terms & Conditions</span>
+        </button>
+      </nav>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-nav" id="mobileNav">
+      <button type="button" class="mobile-nav-item" id="mobNavMyRequests">
+        <span class="nav-icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+        </span>
+        My Requests
+      </button>
+      <button type="button" class="mobile-nav-item" id="mobNavTracking">
+        <span class="nav-icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        </span>
+        Request Tracking
+      </button>
+      <button type="button" class="mobile-nav-item" id="mobNavFeedback">
+        <span class="nav-icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        </span>
+        Feedback
+      </button>
+      <button type="button" class="mobile-nav-item" id="mobNavTerms">
+        <span class="nav-icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        </span>
+        Terms & Conditions
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="page-container">
+    <div class="form-card">
+      
+      <!-- Card Header Brand -->
+      <div class="card-brand-header">
+        <div class="crest-large-wrapper">
+          <!-- Official Yenepoya Logo -->
+          <svg class="crest-large" viewBox="0 0 120 102" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="card-shield-top">
+                <polygon points="28,8 92,8 92,25 60,45 28,25"/>
+              </clipPath>
+              <clipPath id="card-shield-left">
+                <path d="M28 25 L60 45 V81 C48 78 28 65 28 42 Z"/>
+              </clipPath>
+              <clipPath id="card-shield-right">
+                <path d="M92 25 L60 45 V81 C72 78 92 65 92 42 Z"/>
+              </clipPath>
+              <path id="cardBannerCurve" d="M25 80 Q60 93 95 80"/>
+            </defs>
+
+            <!-- Top Lime Green Segment -->
+            <g clip-path="url(#card-shield-top)">
+              <rect x="25" y="5" width="70" height="42" fill="#9EC73D"/>
+              <line x1="32" y1="26" x2="62" y2="7" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="42" y1="28" x2="74" y2="7" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="52" y1="30" x2="86" y2="7" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="62" y1="33" x2="94" y2="12" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="72" y1="35" x2="94" y2="21" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="82" y1="37" x2="94" y2="29" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Bottom-Left Sky Cyan Segment -->
+            <g clip-path="url(#card-shield-left)">
+              <rect x="25" y="24" width="37" height="60" fill="#38B7E8"/>
+              <line x1="26" y1="30" x2="62" y2="48" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="26" y1="39" x2="62" y2="57" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="26" y1="48" x2="62" y2="66" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="26" y1="57" x2="62" y2="75" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="30" y1="65" x2="56" y2="78" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Right Grey Segment -->
+            <g clip-path="url(#card-shield-right)">
+              <rect x="58" y="24" width="37" height="60" fill="#8F9297"/>
+              <line x1="67" y1="46" x2="67" y2="78" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="74" y1="42" x2="74" y2="74" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="81" y1="37" x2="81" y2="69" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="88" y1="32" x2="88" y2="61" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/>
+            </g>
+
+            <!-- Dividing Borders -->
+            <path d="M28 8 H92 V42 C92 65 72 78 60 81 C48 78 28 65 28 42 Z" stroke="#ffffff" stroke-width="2.2" fill="none"/>
+            <path d="M28 25 L60 45 L92 25" stroke="#ffffff" stroke-width="2.2" fill="none"/>
+            <line x1="60" y1="45" x2="60" y2="81" stroke="#ffffff" stroke-width="2.2"/>
+
+            <!-- Banner Ribbon Tails and Folds -->
+            <polygon points="12,69 26,67 26,79 12,82 18,75.5" fill="#9CA3AF" stroke="#6B7280" stroke-width="0.8"/>
+            <polygon points="108,69 94,67 94,79 108,82 102,75.5" fill="#9CA3AF" stroke="#6B7280" stroke-width="0.8"/>
+            <polygon points="26,67 33,75 26,79" fill="#111827"/>
+            <polygon points="94,67 87,75 94,79" fill="#111827"/>
+
+            <!-- Main Curved Banner -->
+            <path d="M22 71 Q60 86 98 71 L98 82 Q60 97 22 82 Z" fill="#C4CBD5" stroke="#4B5563" stroke-width="1"/>
+            <text font-family="'Plus Jakarta Sans', Arial, sans-serif" font-size="5.6" font-weight="800" fill="#1E293B" letter-spacing="0.8">
+              <textPath href="#cardBannerCurve" startOffset="50%" text-anchor="middle">
+                RABBI ZIDNI 'ILMA
+              </textPath>
+            </text>
+          </svg>
+        </div>
+        <h1 class="portal-main-title">YENEPOYA</h1>
+        <p class="portal-institution-title">(Deemed to be University)</p>
+        <p class="portal-badge-title">Student Portal</p>
+      </div>
+
+      <!-- Student Request Form -->
+      <form id="studentRequestForm" class="student-form" novalidate>
+        <div class="form-grid">
+          
+          <!-- Column 1: Row 1 -->
+          <div class="form-group">
+            <label for="studentName" class="form-label">
+              STUDENT NAME <span class="required-star">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="studentName" 
+                name="studentName" 
+                class="form-control" 
+                placeholder="Enter student's full name" 
+                required
+                autocomplete="name"
+              >
+            </div>
+            <div class="error-msg" id="studentNameError">Please enter student's full name</div>
+          </div>
+
+          <!-- Column 2: Row 1 -->
+          <div class="form-group">
+            <label for="campusId" class="form-label">
+              CAMPUS ID / REG NO. <span class="required-star">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="campusId" 
+                name="campusId" 
+                class="form-control" 
+                placeholder="Enter 5-digit campus ID (e.g. 10492)" 
+                maxlength="5"
+                inputmode="numeric"
+                pattern="[0-9]{5}"
+                required
+                autocomplete="off"
+              >
+            </div>
+            <div class="error-msg" id="campusIdError">Please enter a valid 5-digit campus ID</div>
+          </div>
+
+          <!-- Column 1: Row 2 -->
+          <div class="form-group">
+            <label for="studentBranch" class="form-label">
+              STUDENT BRANCH <span class="required-star">*</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="studentBranch" name="studentBranch" class="form-control select-control" required>
+                <option value="" disabled selected hidden>Select Branch</option>
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                <option value="Information Science & Engineering">Information Science & Engineering</option>
+                <option value="Artificial Intelligence & Data Science">Artificial Intelligence & Data Science</option>
+                <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Civil Engineering">Civil Engineering</option>
+                <option value="Biotechnology">Biotechnology</option>
+                <option value="MBBS / Medical Sciences">MBBS / Medical Sciences</option>
+                <option value="Dental Surgery (BDS)">Dental Surgery (BDS)</option>
+                <option value="Pharmacy (B.Pharm / Pharm.D)">Pharmacy (B.Pharm / Pharm.D)</option>
+                <option value="Nursing Sciences">Nursing Sciences</option>
+                <option value="Physiotherapy (BPT)">Physiotherapy (BPT)</option>
+                <option value="Allied Health Sciences">Allied Health Sciences</option>
+                <option value="Management Studies (BBA/MBA)">Management Studies (BBA/MBA)</option>
+              </select>
+              <div class="select-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="error-msg" id="studentBranchError">Please select your branch</div>
+          </div>
+
+          <!-- Column 2: Row 2 -->
+          <div class="form-group" id="queryGroup">
+            <label for="queryType" class="form-label">
+              WHAT DO YOU WANT? <span class="required-star">*</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="queryType" name="queryType" class="form-control select-control" required>
+                <option value="" disabled selected hidden>Select what you want / query</option>
+                
+                <optgroup label="Certificates & Documents">
+                  <option value="Bonafide Certificate">Bonafide Certificate (Visa / Passport / Loan)</option>
+                  <option value="Study & Conduct Certificate">Study & Conduct Certificate</option>
+                  <option value="Transfer / Migration Certificate">Transfer / Migration Certificate</option>
+                  <option value="No Objection Certificate (NOC)">No Objection Certificate (NOC for Internship)</option>
+                  <option value="Course Completion Certificate">Course Completion Certificate</option>
+                </optgroup>
+
+                <optgroup label="Academic & Examination">
+                  <option value="Official Transcript / Consolidated Marks Card">Official Transcript / Consolidated Marks Card</option>
+                  <option value="Duplicate Grade Card / Hall Ticket">Duplicate Grade Card / Hall Ticket</option>
+                  <option value="Revaluation / Paper Re-checking">Revaluation / Paper Re-checking</option>
+                  <option value="Attendance / Academic Clarification">Attendance / Academic Clarification</option>
+                </optgroup>
+
+                <optgroup label="Fees & Accounts">
+                  <option value="Fee Receipt & Payment Confirmation">Fee Receipt & Payment Confirmation</option>
+                  <option value="Fee Structure Estimation Letter">Fee Structure Estimation Letter (Bank Loan)</option>
+                  <option value="Scholarship & Financial Assistance">Scholarship & Financial Assistance</option>
+                </optgroup>
+
+                <optgroup label="Campus & Student Facilities">
+                  <option value="Student ID Card Re-issue / Replacement">Student ID Card Re-issue / Replacement</option>
+                  <option value="Hostel & Mess Related Query">Hostel & Mess Related Query</option>
+                  <option value="Campus Transport / Bus Pass Request">Campus Transport / Bus Pass Request</option>
+                  <option value="Library Clearance & Book Query">Library Clearance & Book Query</option>
+                </optgroup>
+
+                <optgroup label="Other Queries">
+                  <option value="Other / Custom Request">Other / Custom Request (Specify Details)</option>
+                </optgroup>
+              </select>
+              <div class="select-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="custom-query-box" id="customQueryBox" style="display: none; margin-top: 8px;">
+              <input type="text" id="customQueryDetail" class="form-control" placeholder="Please specify your request details...">
+            </div>
+            <div class="error-msg" id="queryTypeError">Please select what you want</div>
+          </div>
+
+          <!-- Column 1: Row 3 -->
+          <div class="form-group">
+            <label for="emailId" class="form-label">
+              EMAIL ID <span class="required-star">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                type="email" 
+                id="emailId" 
+                name="emailId" 
+                class="form-control" 
+                placeholder="Enter your email address" 
+                required
+                autocomplete="email"
+              >
+            </div>
+            <div class="error-msg" id="emailIdError">Please enter a valid email address</div>
+          </div>
+
+          <!-- Column 2: Row 3 -->
+          <div class="form-group">
+            <label for="whichYear" class="form-label">
+              WHICH YEAR <span class="required-star">*</span>
+            </label>
+            <div class="select-wrapper">
+              <select id="whichYear" name="whichYear" class="form-control select-control" required>
+                <option value="" disabled selected hidden>Select Year</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+              </select>
+              <div class="select-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="error-msg" id="whichYearError">Please select your current year</div>
+          </div>
+
+          <!-- Column 1: Row 4 -->
+          <div class="form-group">
+            <label for="phoneNumber" class="form-label">
+              PHONE NUMBER <span class="required-star">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                type="tel" 
+                id="phoneNumber" 
+                name="phoneNumber" 
+                class="form-control" 
+                placeholder="Enter your phone number" 
+                required
+                autocomplete="tel"
+              >
+            </div>
+            <div class="error-msg" id="phoneNumberError">Please enter a valid 10-digit phone number</div>
+          </div>
+
+          <!-- Column 2: Row 4 (Empty slot to keep grid aligned) -->
+          <div class="form-group empty-slot" aria-hidden="true"></div>
+
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-submit-container">
+          <button type="submit" class="btn-submit" id="submitRequestBtn">
+            <span class="btn-text">SUBMIT REQUEST</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <!-- Footer Assistance Note -->
+        <div class="form-footer-note">
+          Need assistance? <button type="button" class="link-support" id="supportDeskLink">Contact student support desk.</button>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Modal: Request Tracking -->
+  <div class="modal-backdrop" id="modalTracking">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </div>
+          <h3>Request Tracking</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalTracking">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">Enter your Ticket Reference Number or Campus ID to inspect the current status of your submitted request.</p>
+        <div class="tracking-search-bar">
+          <input type="text" id="trackInput" class="form-control" placeholder="e.g. YEN-2026-9281 or 22CS084">
+          <button type="button" class="btn-track" id="trackSubmitBtn">Track</button>
+        </div>
+        <div id="trackingResult" class="tracking-result-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: My Requests -->
+  <div class="modal-backdrop" id="modalMyRequests">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+          </div>
+          <h3>My Submitted Requests</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalMyRequests">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="myRequestsList" class="my-requests-container">
+          <!-- Populated dynamically via app.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Feedback -->
+  <div class="modal-backdrop" id="modalFeedback">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          </div>
+          <h3>Student Feedback</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalFeedback">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="feedbackForm">
+          <div class="form-group">
+            <label class="form-label">How would you rate your portal experience?</label>
+            <div class="rating-stars" id="ratingStars">
+              <button type="button" class="star-btn" data-star="1">&#9733;</button>
+              <button type="button" class="star-btn" data-star="2">&#9733;</button>
+              <button type="button" class="star-btn" data-star="3">&#9733;</button>
+              <button type="button" class="star-btn" data-star="4">&#9733;</button>
+              <button type="button" class="star-btn active" data-star="5">&#9733;</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="feedbackComments" class="form-label">Comments or Suggestions</label>
+            <textarea id="feedbackComments" class="form-control textarea-control" rows="4" placeholder="Share your suggestions to help us improve student services..."></textarea>
+          </div>
+          <button type="submit" class="btn-submit">Submit Feedback</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Terms & Conditions -->
+  <div class="modal-backdrop" id="modalTerms">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
+          <h3>Terms & Conditions</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalTerms">&times;</button>
+      </div>
+      <div class="modal-body terms-content">
+        <h4>1. General Portal Usage</h4>
+        <p>This portal is exclusively intended for bona fide enrolled students and scholars of Yenepoya (Deemed to be University) for official student queries, academic service requests, and grievance registration.</p>
+        
+        <h4>2. Accuracy of Information</h4>
+        <p>All information provided (such as Campus ID, Registered Email, and Phone Number) must match university records. Submission of fraudulent information or queries under impersonation is strictly prohibited under university regulations.</p>
+        
+        <h4>3. Processing Timelines</h4>
+        <p>Standard queries will be acknowledged within 24 business hours. Complex academic inquiries or certificate issuances are subject to official university departmental turnaround schedules.</p>
+        
+        <h4>4. Privacy & Data Protection</h4>
+        <p>All personal identification details collected via this portal are strictly secured and used solely for university administrative communication and request resolution.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Support Desk -->
+  <div class="modal-backdrop" id="modalSupport">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-header-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+          <h3>Student Support Desk</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalSupport">&times;</button>
+      </div>
+      <div class="modal-body support-body">
+        <div class="support-card">
+          <div class="support-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          </div>
+          <div>
+            <strong>Helpline Desk</strong>
+            <p>+91 824 220 6000 / Ext: 2045</p>
+            <small>Mon - Sat (9:00 AM to 5:00 PM IST)</small>
+          </div>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </div>
+          <div>
+            <strong>Email Support</strong>
+            <p><a href="mailto:support@yenepoya.edu.in">support@yenepoya.edu.in</a></p>
+            <small>Response within 24 hours</small>
+          </div>
+        </div>
+        <div class="support-card">
+          <div class="support-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </div>
+          <div>
+            <strong>Campus Location</strong>
+            <p>University Administrative Office, Yenepoya Campus, University Road, Deralakatte, Mangaluru - 575018</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Confirmation Modal -->
+  <div class="modal-backdrop" id="modalSuccess">
+    <div class="modal-dialog modal-success-dialog">
+      <div class="success-icon-badge">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h3 class="success-title">Request Submitted Successfully!</h3>
+      <p class="success-desc">Your student service request has been logged. An email confirmation has been dispatched to your registered address.</p>
+      
+      <div class="ticket-badge-card">
+        <span class="ticket-label">TICKET REFERENCE ID</span>
+        <span class="ticket-number" id="successTicketId">YEN-2026-84920</span>
+      </div>
+
+      <div class="success-details-box" id="successDetailsBox">
+        <!-- Dynamically filled with request snapshot -->
+      </div>
+
+      <div class="modal-success-actions">
+        <button type="button" class="btn-track-now" id="btnTrackNow">Track Status</button>
+        <button type="button" class="btn-done" data-close="modalSuccess">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
