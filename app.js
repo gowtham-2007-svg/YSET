@@ -18,8 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Seed sample requests if empty for realistic demo experience
-  seedSampleData();
+
 
   // DOM Elements
   const form = document.getElementById('studentRequestForm');
