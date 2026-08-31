@@ -1005,9 +1005,11 @@ document.addEventListener('DOMContentLoaded', () => {
         adminEmailStep.style.display = 'none';
         adminOtpStep.style.display = 'block';
         if (adminAuthDescription) adminAuthDescription.textContent = 'Check your email inbox.';
+        showToast('Login link sent! Please check your inbox or spam folder.', 'success');
       } catch (err) {
-        showToast('Failed to send login link. Please try again.', 'error');
-        console.error(err);
+        console.error('Supabase signInWithOtp error:', err);
+        const msg = err && err.message ? err.message : 'Failed to send login link. Please try again.';
+        showToast(msg, 'error');
       } finally {
         if (spinner) spinner.style.display = 'none';
         btnSendOtp.disabled = false;
