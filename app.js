@@ -60,9 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalAdminDashboard = document.getElementById('modalAdminDashboard');
 
   // Admin Dashboard Elements
-  const adminLoginForm = document.getElementById('adminLoginForm');
-  const adminPasscode = document.getElementById('adminPasscode');
-  const adminPasscodeError = document.getElementById('adminPasscodeError');
+  const adminEmail = document.getElementById('adminEmail');
+  const adminEmailStep = document.getElementById('adminEmailStep');
+  const adminOtpStep = document.getElementById('adminOtpStep');
+  const btnSendOtp = document.getElementById('btnSendOtp');
+  const btnResendOtp = document.getElementById('btnResendOtp');
+  const adminAuthDescription = document.getElementById('adminAuthDescription');
   const btnAdminLogout = document.getElementById('btnAdminLogout');
   const btnExportCSV = document.getElementById('btnExportCSV');
   const adminSearchInput = document.getElementById('adminSearchInput');
@@ -167,7 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
       openModal(modalAdminDashboard);
     } else {
       openModal(modalAdminLogin);
-      setTimeout(() => { if (adminPasscode) adminPasscode.focus(); }, 150);
+      if (adminEmailStep && adminOtpStep) {
+        adminEmailStep.style.display = 'block';
+        adminOtpStep.style.display = 'none';
+      }
+      setTimeout(() => { if (adminEmail) adminEmail.focus(); }, 150);
     }
   }
 
@@ -473,6 +480,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load from document_requests on initialization
   if (supabase) {
     fetchSupabaseDocumentRequests();
+
+    // Check if user is already logged in (e.g., just clicked a magic link)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && session.user && session.user.email === 'gn251759@gmail.com') {
+        isAdminAuthenticated = true;
+      }
+    });
+
+    // Listen for auth changes (like returning from email link)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session && session.user.email === 'gn251759@gmail.com') {
+        isAdminAuthenticated = true;
+        closeModal(modalAdminLogin);
+        renderAdminDashboard();
+        openModal(modalAdminDashboard);
+        showToast('Admin access authorized.', 'success');
+      }
+    });
 
     // Supabase Real-time updates on document_requests table
     try {
@@ -955,26 +980,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Admin Dashboard Management (Supabase document_requests)
+  // Admin Dashboard Management (Supabase Magic Link)
   // --------------------------------------------------------------------------
-  if (adminLoginForm) {
-    adminLoginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const enteredPasscode = adminPasscode.value.trim();
-
-      // Acceptable administrative passcodes
-      if (enteredPasscode === 'admin123' || enteredPasscode === '1234' || enteredPasscode === 'admin') {
-        isAdminAuthenticated = true;
-        adminPasscode.value = '';
-        if (adminPasscodeError) adminPasscodeError.style.display = 'none';
-        closeModal(modalAdminLogin);
-        renderAdminDashboard();
-        openModal(modalAdminDashboard);
-        showToast('Admin access authorized.', 'success');
-      } else {
-        if (adminPasscodeError) adminPasscodeError.style.display = 'block';
-        adminPasscode.classList.add('is-invalid');
+  if (btnSendOtp) {
+    btnSendOtp.addEventListener('click', async () => {
+      const email = adminEmail.value.trim().toLowerCase();
+      if (email !== 'gn251759@gmail.com') {
+        showToast('Unauthorized email address.', 'error');
+        return;
       }
+      
+      const spinner = btnSendOtp.querySelector('.btn-spinner');
+      if (spinner) spinner.style.display = 'inline-block';
+      btnSendOtp.disabled = true;
+
+      try {
+        const { error } = await supabase.auth.signInWithOtp({ 
+          email: email, 
+          options: { emailRedirectTo: window.location.origin } 
+        });
+        if (error) throw error;
+        
+        // Show Waiting for Link step
+        adminEmailStep.style.display = 'none';
+        adminOtpStep.style.display = 'block';
+        if (adminAuthDescription) adminAuthDescription.textContent = 'Check your email inbox.';
+      } catch (err) {
+        showToast('Failed to send login link. Please try again.', 'error');
+        console.error(err);
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+        btnSendOtp.disabled = false;
+      }
+    });
+  }
+
+  if (btnResendOtp) {
+    btnResendOtp.addEventListener('click', () => {
+      adminEmailStep.style.display = 'block';
+      adminOtpStep.style.display = 'none';
+      if (adminAuthDescription) adminAuthDescription.textContent = 'Enter your administrative email to receive a secure login link.';
+      if (adminEmail) adminEmail.value = '';
     });
   }
 

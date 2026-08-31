@@ -24,6 +24,6 @@ const CONFIG = {
   // Notification email for admin alerts
   NOTIFICATION_EMAIL: 'your-email@example.com',
 
-  // Default admin PIN (change this before deploying!)
-  DEFAULT_ADMIN_PIN: 'admin123'
+  // Allowed admin emails for OTP login
+  ADMIN_EMAILS: ['gn251759@gmail.com']
 };
