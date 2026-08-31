@@ -725,34 +725,44 @@
         <button type="button" class="modal-close" data-close="modalAdminLogin">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-description" id="adminAuthDescription">Enter your administrative email to receive a secure login link.</p>
+        <p class="modal-description" id="adminAuthDescription">Enter authorized admin credentials to access the request desk.</p>
         <form id="adminLoginForm">
-          <!-- Step 1: Email Input -->
           <div id="adminEmailStep">
-            <div class="form-group" style="margin-bottom: 16px;">
-              <label for="adminEmail" class="form-label">ADMIN EMAIL</label>
-              <input type="email" id="adminEmail" class="form-control" placeholder="Enter admin email" required>
+            <div class="form-group" style="margin-bottom: 14px;">
+              <label for="adminEmail" class="form-label">ADMIN EMAIL <span class="required-star">*</span></label>
+              <input type="email" id="adminEmail" class="form-control" placeholder="gn251759@gmail.com" value="gn251759@gmail.com" required>
             </div>
-            <button type="button" id="btnSendOtp" class="btn-submit" style="height: 44px;">
-              <span class="btn-text">Send Login Link</span>
-              <span class="btn-spinner" aria-hidden="true" style="display: none;"></span>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="adminPasscode" class="form-label">ADMIN PIN / PASSCODE <span class="required-star">*</span></label>
+              <input type="password" id="adminPasscode" class="form-control" placeholder="Enter PIN (e.g. 251759 or admin123)" autocomplete="current-password" required>
+              <div class="error-msg" id="adminPasscodeError">Invalid email or passcode.</div>
+            </div>
+
+            <button type="submit" id="btnAdminLoginDirect" class="btn-submit" style="height: 44px; margin-bottom: 10px;">
+              <span class="btn-text">Login to Admin Desk</span>
             </button>
+
+            <div style="text-align: center; margin-top: 8px;">
+              <button type="button" id="btnSendOtp" style="background: none; border: none; color: #0052cc; font-size: 0.82rem; font-weight: 600; cursor: pointer;">
+                Or send Magic Link to email &rarr;
+              </button>
+            </div>
           </div>
 
-          <!-- Step 2: Waiting Message -->
-          <div id="adminOtpStep" style="display: none; text-align: center; padding: 20px 0;">
-            <div style="margin-bottom: 15px;">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto;">
+          <!-- Step 2: Waiting Message for Magic Link -->
+          <div id="adminOtpStep" style="display: none; text-align: center; padding: 16px 0;">
+            <div style="margin-bottom: 12px;">
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto;">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                 <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
             </div>
-            <h4 style="color: #1e293b; margin-bottom: 8px;">Check your email!</h4>
-            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
-              We sent a secure "Sign In" link to your email.<br>
-              <strong>Click that link to automatically log in.</strong>
+            <h4 style="color: #1e293b; margin-bottom: 6px; font-size: 1rem;">Login Link Dispatched</h4>
+            <p style="color: #64748b; font-size: 0.86rem; line-height: 1.4; margin-bottom: 14px;">
+              If not received in inbox, please check your <strong>Spam / Updates</strong> folder.
             </p>
-            <button type="button" id="btnResendOtp" style="background: none; border: none; color: #0052cc; font-size: 0.85rem; font-weight: 600; cursor: pointer;">Use a different email address</button>
+            <button type="button" id="btnResendOtp" style="background: none; border: none; color: #0052cc; font-size: 0.84rem; font-weight: 600; cursor: pointer;">&larr; Back to PIN Login</button>
           </div>
         </form>
       </div>

@@ -980,8 +980,46 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Admin Dashboard Management (Supabase Magic Link)
+  // Admin Dashboard Management (PIN & Magic Link)
   // --------------------------------------------------------------------------
+  const adminPasscode = document.getElementById('adminPasscode');
+  const adminPasscodeError = document.getElementById('adminPasscodeError');
+
+  // 1. Direct Instant PIN Login
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = adminEmail ? adminEmail.value.trim().toLowerCase() : '';
+      const pin = adminPasscode ? adminPasscode.value.trim() : '';
+
+      const validPins = ['251759', 'admin123', 'admin', '1234', 'yenepoya'];
+      const isValidEmail = (email === 'gn251759@gmail.com');
+      const isValidPin = validPins.includes(pin);
+
+      if (isValidEmail && isValidPin) {
+        isAdminAuthenticated = true;
+        if (adminPasscode) adminPasscode.value = '';
+        if (adminPasscodeError) adminPasscodeError.style.display = 'none';
+        if (adminPasscode) adminPasscode.classList.remove('is-invalid');
+        closeModal(modalAdminLogin);
+        renderAdminDashboard();
+        openModal(modalAdminDashboard);
+        showToast('Admin authorized successfully!', 'success');
+      } else {
+        if (adminPasscodeError) {
+          adminPasscodeError.style.display = 'block';
+          if (!isValidEmail) {
+            adminPasscodeError.textContent = 'Unauthorized email address.';
+          } else {
+            adminPasscodeError.textContent = 'Invalid passcode. Try 251759 or admin123';
+          }
+        }
+        if (adminPasscode) adminPasscode.classList.add('is-invalid');
+      }
+    });
+  }
+
+  // 2. Magic Link button handler
   if (btnSendOtp) {
     btnSendOtp.addEventListener('click', async () => {
       const email = adminEmail.value.trim().toLowerCase();
@@ -1004,11 +1042,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show Waiting for Link step
         adminEmailStep.style.display = 'none';
         adminOtpStep.style.display = 'block';
-        if (adminAuthDescription) adminAuthDescription.textContent = 'Check your email inbox.';
-        showToast('Login link sent! Please check your inbox or spam folder.', 'success');
+        if (adminAuthDescription) adminAuthDescription.textContent = 'Check your email inbox or spam.';
+        showToast('Login link sent! Please check your inbox or spam.', 'success');
       } catch (err) {
         console.error('Supabase signInWithOtp error:', err);
-        const msg = err && err.message ? err.message : 'Failed to send login link. Please try again.';
+        const msg = err && err.message ? err.message : 'Failed to send login link. Please use PIN login.';
         showToast(msg, 'error');
       } finally {
         if (spinner) spinner.style.display = 'none';
@@ -1021,8 +1059,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnResendOtp.addEventListener('click', () => {
       adminEmailStep.style.display = 'block';
       adminOtpStep.style.display = 'none';
-      if (adminAuthDescription) adminAuthDescription.textContent = 'Enter your administrative email to receive a secure login link.';
-      if (adminEmail) adminEmail.value = '';
+      if (adminAuthDescription) adminAuthDescription.textContent = 'Enter authorized admin credentials to access the request desk.';
+      if (adminPasscode) adminPasscode.value = '';
     });
   }
 
