@@ -9,10 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize Supabase Cloud Database Client
   let supabase = null;
-  if (typeof window.supabase !== 'undefined' && typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY) {
+  const SUPABASE_URL = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) 
+    ? CONFIG.SUPABASE_URL 
+    : 'https://calovrlfwpqumvfgewvo.supabase.co';
+  const SUPABASE_ANON_KEY = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_ANON_KEY) 
+    ? CONFIG.SUPABASE_ANON_KEY 
+    : 'sb_publishable_HahFFoEecUFFIzdb4spS5w_WO93yKNN';
+
+  if (typeof window.supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
     try {
-      supabase = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-      console.log('Supabase Cloud Database connected: ', CONFIG.SUPABASE_URL);
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('Supabase Cloud Database connected: ', SUPABASE_URL);
     } catch (err) {
       console.warn('Supabase initialization error:', err);
     }
