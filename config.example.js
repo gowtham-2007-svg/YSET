@@ -25,5 +25,5 @@ const CONFIG = {
   NOTIFICATION_EMAIL: 'your-email@example.com',
 
   // Allowed admin emails for OTP login
-  ADMIN_EMAILS: ['gn251759@gmail.com']
+  ADMIN_EMAILS: ['yadhur689@gmail.com']
 };
